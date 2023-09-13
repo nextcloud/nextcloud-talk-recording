@@ -331,7 +331,7 @@ def main():
     benchmarkService.run(args)
 
     output = benchmarkService.getRecorderArguments()[-1]
-    print(f"Recorder args: {' '.join(benchmarkService.getRecorderArguments())}")
+    print(f"Recorder arguments: {' '.join(benchmarkService.getRecorderArguments())}")
     print(f"File size: {os.stat(output).st_size}")
     print(f"Average CPU percents: {benchmarkService.getAverageCpuPercents()}")
     print(f"Average memory infos: {benchmarkService.getAverageMemoryInfos()}")
