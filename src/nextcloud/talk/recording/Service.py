@@ -82,18 +82,18 @@ def newAudioSink(baseSinkName):
 
     return moduleIndex, sinkIndex, sourceIndex
 
-def processLog(loggerName, pipe, level = logging.INFO):
+def processLog(loggerName, textIoWrapper, level = logging.INFO):
     """
     Logs the process output.
 
     :param loggerName: the name of the logger.
-    :param pipe: Pipe to the process output.
+    :param textIoWrapper: TextIOWrapper with the process output.
     :param level: log level, INFO by default.
     """
     logger = logging.getLogger(loggerName)
 
-    with pipe:
-        for line in pipe:
+    with textIoWrapper:
+        for line in textIoWrapper:
             # Lines captured from the recorder have a trailing new line, so it
             # needs to be removed.
             logger.log(level, line.rstrip('\n'))
