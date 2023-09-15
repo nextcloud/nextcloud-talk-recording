@@ -178,7 +178,10 @@ class BenchmarkService:
             fileName = self._recorderArguments[-1]
 
             if os.path.exists(fileName):
-                raise Exception("File exists")
+                if args.force:
+                    os.remove(fileName)
+                else:
+                    raise Exception("File exists")
 
             self._logger.debug("Starting recorder")
             # pylint: disable=consider-using-with
@@ -307,6 +310,7 @@ def main():
     defaultConfig = Config()
 
     parser = argparse.ArgumentParser()
+    parser.add_argument("-f", "--force", help="overwrite output file if it exists", action="store_true")
     parser.add_argument("-l", "--length", help="benchmark duration (in seconds)", default=180, type=int)
     parser.add_argument("--width", help="output width", default=defaultConfig.getBackendVideoWidth(""), type=int)
     parser.add_argument("--height", help="output height", default=defaultConfig.getBackendVideoHeight(""), type=int)
