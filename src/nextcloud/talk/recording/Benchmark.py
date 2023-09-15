@@ -316,7 +316,7 @@ def main():
     parser.add_argument("--audio-only", help="audio only recording", action="store_true")
     parser.add_argument("-v", "--verbose", help="verbose mode", action="store_true")
     parser.add_argument("--verbose-extra", help="extra verbose mode", action="store_true")
-    parser.add_argument("input", help="input video filename")
+    parser.add_argument("input", help="input filename")
     parser.add_argument("output", help="output filename")
     args = parser.parse_args()
 
