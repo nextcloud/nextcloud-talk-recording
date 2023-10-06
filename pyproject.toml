@@ -20,7 +20,7 @@ dependencies = [
 dynamic = ["version"]
 
 [project.urls]
-repository = "https://github.com/nextcloud/spreed"
+repository = "https://github.com/nextcloud/nextcloud-talk-recording"
 
 [project.scripts]
 nextcloud-talk-recording = "nextcloud.talk.recording.__main__:main"

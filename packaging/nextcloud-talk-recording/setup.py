@@ -10,5 +10,5 @@ setup(
     # also set in pyproject.toml it could not be set here either, as due to how
     # the parameters are internally handled by stdeb it would end mixing the
     # author set here with the author and email set in pyproject.toml.
-    url = "https://github.com/nextcloud/spreed",
+    url = "https://github.com/nextcloud/nextcloud-talk-recording",
 )
