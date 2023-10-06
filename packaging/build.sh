@@ -148,10 +148,7 @@ setOperatingSystemAbstractionVariables
 # just "XXX" would match every name that contained "XXX".
 if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-debian11$")" ]; then
 	echo "Creating Nextcloud Talk recording packages builder container for Debian 11"
-	# The main Talk directory is mounted rather than just the recording
-	# directory to be able to get the timestamp from git for reproducible
-	# builds.
-	docker run --detach --tty --volume "$(realpath ../../)":/spreed/ --name=$CONTAINER-debian11 $DOCKER_OPTIONS debian:11 bash
+	docker run --detach --tty --volume "$(realpath ../)":/nextcloud-talk-recording/ --name=$CONTAINER-debian11 $DOCKER_OPTIONS debian:11 bash
 
 	echo "Installing required build dependencies"
 	# "noninteractive" is used to provide default settings instead of asking for
@@ -161,10 +158,7 @@ if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-debian11$")" ]; t
 fi
 if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-ubuntu20.04$")" ]; then
 	echo "Creating Nextcloud Talk recording packages builder container for Ubuntu 20.04"
-	# The main Talk directory is mounted rather than just the recording
-	# directory to be able to get the timestamp from git for reproducible
-	# builds.
-	docker run --detach --tty --volume "$(realpath ../../)":/spreed/ --name=$CONTAINER-ubuntu20.04 $DOCKER_OPTIONS ubuntu:20.04 bash
+	docker run --detach --tty --volume "$(realpath ../)":/nextcloud-talk-recording/ --name=$CONTAINER-ubuntu20.04 $DOCKER_OPTIONS ubuntu:20.04 bash
 
 	echo "Installing required build dependencies"
 	# "noninteractive" is used to provide default settings instead of asking for
@@ -174,10 +168,7 @@ if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-ubuntu20.04$")" ]
 fi
 if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-ubuntu22.04$")" ]; then
 	echo "Creating Nextcloud Talk recording packages builder container for Ubuntu 22.04"
-	# The main Talk directory is mounted rather than just the recording
-	# directory to be able to get the timestamp from git for reproducible
-	# builds.
-	docker run --detach --tty --volume "$(realpath ../../)":/spreed/ --name=$CONTAINER-ubuntu22.04 $DOCKER_OPTIONS ubuntu:22.04 bash
+	docker run --detach --tty --volume "$(realpath ../)":/nextcloud-talk-recording/ --name=$CONTAINER-ubuntu22.04 $DOCKER_OPTIONS ubuntu:22.04 bash
 
 	echo "Installing required build dependencies"
 	# "noninteractive" is used to provide default settings instead of asking for
@@ -202,10 +193,10 @@ fi
 USER=$(ls -l --numeric-uid-gid --directory . | sed 's/ \+/ /g' | cut --delimiter " " --fields 3)
 
 echo "Building recording backend packages for Debian 11"
-docker exec --tty --interactive --user $USER --workdir /spreed/recording/packaging $CONTAINER-debian11 make
+docker exec --tty --interactive --user $USER --workdir /nextcloud-talk-recording/packaging $CONTAINER-debian11 make
 
 echo "Building recording backend packages for Ubuntu 20.04"
-docker exec --tty --interactive --user $USER --workdir /spreed/recording/packaging $CONTAINER-ubuntu20.04 make
+docker exec --tty --interactive --user $USER --workdir /nextcloud-talk-recording/packaging $CONTAINER-ubuntu20.04 make
 
 echo "Building recording backend packages for Ubuntu 22.04"
-docker exec --tty --interactive --user $USER --workdir /spreed/recording/packaging $CONTAINER-ubuntu22.04 make
+docker exec --tty --interactive --user $USER --workdir /nextcloud-talk-recording/packaging $CONTAINER-ubuntu22.04 make
