@@ -174,7 +174,7 @@ def _startRecordingService(service, actorType, actorId):
                 # Service was already stopped, exception should have been caused
                 # by stopping the helpers even before the recorder started.
                 app.logger.info(f"Recording stopped before starting: {service.backend} {service.token}", exc_info=exception)
-                
+
                 return
 
             app.logger.exception(f"Failed to start recording: {service.backend} {service.token}")
