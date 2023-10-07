@@ -96,40 +96,40 @@ class BiDiLogsHelper:
             self.loggingThread.join()
 
     def __messageFromEvent(self, event):
-            if not 'params' in event:
-                return '???'
+        if not 'params' in event:
+            return '???'
 
-            method = ''
-            if 'method' in event['params']:
-                method = event['params']['method']
-            elif 'level' in event['params']:
-                method = event['params']['level'] if event['params']['level'] != 'warning' else 'warn'
+        method = ''
+        if 'method' in event['params']:
+            method = event['params']['method']
+        elif 'level' in event['params']:
+            method = event['params']['level'] if event['params']['level'] != 'warning' else 'warn'
 
-            text = ''
-            if 'text' in event['params']:
-                text = event['params']['text']
+        text = ''
+        if 'text' in event['params']:
+            text = event['params']['text']
 
-            time = '??:??:??'
-            if 'timestamp' in event['params']:
-                timestamp = event['params']['timestamp']
+        time = '??:??:??'
+        if 'timestamp' in event['params']:
+            timestamp = event['params']['timestamp']
 
-                # JavaScript timestamps are millisecond based, Python timestamps
-                # are second based.
-                time = datetime.fromtimestamp(timestamp / 1000).strftime('%H:%M:%S')
+            # JavaScript timestamps are millisecond based, Python timestamps
+            # are second based.
+            time = datetime.fromtimestamp(timestamp / 1000).strftime('%H:%M:%S')
 
-            methodShort = '?'
-            if method == 'error':
-                methodShort = 'E'
-            elif method == 'warn':
-                methodShort = 'W'
-            elif method == 'log':
-                methodShort = 'L'
-            elif method == 'info':
-                methodShort = 'I'
-            elif method == 'debug':
-                methodShort = 'D'
+        methodShort = '?'
+        if method == 'error':
+            methodShort = 'E'
+        elif method == 'warn':
+            methodShort = 'W'
+        elif method == 'log':
+            methodShort = 'L'
+        elif method == 'info':
+            methodShort = 'I'
+        elif method == 'debug':
+            methodShort = 'D'
 
-            return time + ' ' + methodShort + ' ' + text
+        return time + ' ' + methodShort + ' ' + text
 
     def __processLogEvents(self):
         while True:
