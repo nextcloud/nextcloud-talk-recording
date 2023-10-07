@@ -418,7 +418,7 @@ class SeleniumHelper:
 
         # Add an explicit return point at the end of the script if none is
         # given.
-        if re.search('returnResolve\(.*\)', script) == None:
+        if re.search('returnResolve\(.*\)', script) is None:
             script += '; returnResolve()'
 
         # await is not valid in the root context in Firefox, so the script to be
@@ -494,7 +494,7 @@ class Participant():
         self.seleniumHelper.driver.get(self.nextcloudUrl + '/index.php/call/' + token + '/recording')
 
         secret = config.getBackendSecret(self.nextcloudUrl)
-        if secret == None:
+        if secret is None:
             raise Exception(f"No configured backend secret for {self.nextcloudUrl}")
 
         random = token_urlsafe(64)
@@ -511,7 +511,7 @@ class Participant():
         ''')
 
         secret = config.getSignalingSecret(settings['server'])
-        if secret == None:
+        if secret is None:
             raise Exception(f"No configured signaling secret for {settings['server']}")
 
         random = token_urlsafe(64)

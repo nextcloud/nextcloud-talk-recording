@@ -76,19 +76,19 @@ class RecorderArgumentsBuilder:
         return ffmpegArguments + [outputFileName]
 
     def getFfmpegCommon(self):
-        if self._ffmpegCommon != None:
+        if self._ffmpegCommon is not None:
             return self._ffmpegCommon
 
         return config.getFfmpegCommon()
 
     def getFfmpegOutputAudio(self):
-        if self._ffmpegOutputAudio != None:
+        if self._ffmpegOutputAudio is not None:
             return self._ffmpegOutputAudio
 
         return config.getFfmpegOutputAudio()
 
     def getFfmpegOutputVideo(self):
-        if self._ffmpegOutputVideo != None:
+        if self._ffmpegOutputVideo is not None:
             return self._ffmpegOutputVideo
 
         return config.getFfmpegOutputVideo()

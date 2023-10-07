@@ -149,7 +149,7 @@ def stopped(backend, token, actorType, actorId):
         },
     }
 
-    if actorType != None and actorId != None:
+    if actorType is not None and actorId is not None:
         data['stopped']['actor'] = {
             'type': actorType,
             'id': actorId,
