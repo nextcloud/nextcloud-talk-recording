@@ -60,8 +60,6 @@ def doRequest(backend, request, retries=3):
     :param request: the request to send.
     :param retries: the number of times to retry in case of failure.
     """
-    context = None
-
     backendSkipVerify = config.getBackendSkipVerify(backend)
 
     try:
@@ -69,7 +67,7 @@ def doRequest(backend, request, retries=3):
         preparedRequest = session.prepare_request(request)
         response = session.send(preparedRequest, verify=not backendSkipVerify)
         response.raise_for_status()
-    except Exception as exception:
+    except Exception:
         if retries > 1:
             logger.exception(f"Failed to send message to backend, {retries} retries left!")
             doRequest(backend, request, retries - 1)

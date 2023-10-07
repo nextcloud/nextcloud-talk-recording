@@ -230,7 +230,7 @@ def _stopRecordingService(service, actorType, actorId):
 
     try:
         service.stop(actorType, actorId)
-    except Exception as exception:
+    except Exception:
         app.logger.exception(f"Failed to stop recording: {service.backend} {service.token}")
     finally:
         with servicesLock:

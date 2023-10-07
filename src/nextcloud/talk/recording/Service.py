@@ -246,7 +246,7 @@ class Service:
             # without an expected reason.
             if returnCode != 255:
                 raise Exception("recorder ended unexpectedly")
-        except Exception as exception:
+        except Exception:
             self._stopHelpers()
 
             if self._stopped.is_set() and not self._started.is_set():
