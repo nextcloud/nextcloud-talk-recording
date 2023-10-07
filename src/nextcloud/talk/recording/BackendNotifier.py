@@ -72,7 +72,7 @@ def doRequest(backend, request, retries=3):
             logger.exception(f"Failed to send message to backend, {retries} retries left!")
             doRequest(backend, request, retries - 1)
         else:
-            logger.exception(f"Failed to send message to backend, giving up!")
+            logger.exception("Failed to send message to backend, giving up!")
             raise
 
 def backendRequest(backend, data):

@@ -285,7 +285,7 @@ class Service:
         BackendNotifier.stopped(self.backend, self.token, actorType, actorId)
 
         if not self._fileName:
-            self._logger.error(f"Recording stopping before starting, nothing to upload")
+            self._logger.error("Recording stopping before starting, nothing to upload")
 
             return
 
