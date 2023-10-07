@@ -27,18 +27,18 @@ import hmac
 import json
 import re
 import threading
-import websocket
-
 from datetime import datetime
 from secrets import token_urlsafe
+from shutil import disk_usage
+from time import sleep
+
+import websocket
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.webdriver import WebDriver as ChromeDriver
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.firefox.webdriver import WebDriver as FirefoxDriver
-from shutil import disk_usage
-from time import sleep
 
 from .Config import config
 
