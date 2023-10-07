@@ -43,9 +43,9 @@ class Config:
         fileName = os.path.abspath(fileName)
 
         if not os.path.exists(fileName):
-            self._logger.warning(f"Configuration file not found: {fileName}")
+            self._logger.warning("Configuration file not found: %s", fileName)
         else:
-            self._logger.info(f"Loading {fileName}")
+            self._logger.info("Loading %s", fileName)
 
         self._configParser.read(fileName)
 
@@ -65,11 +65,11 @@ class Config:
 
         for backendId in backendIds:
             if 'url' not in self._configParser[backendId]:
-                self._logger.error(f"Missing 'url' property for backend {backendId}")
+                self._logger.error("Missing 'url' property for backend %s", backendId)
                 continue
 
             if 'secret' not in self._configParser[backendId]:
-                self._logger.error(f"Missing 'secret' property for backend {backendId}")
+                self._logger.error("Missing 'secret' property for backend %s", backendId)
                 continue
 
             backendUrl = self._configParser[backendId]['url'].rstrip('/')
@@ -94,11 +94,11 @@ class Config:
 
         for signalingId in signalingIds:
             if 'url' not in self._configParser[signalingId]:
-                self._logger.error(f"Missing 'url' property for signaling {signalingId}")
+                self._logger.error("Missing 'url' property for signaling %s", signalingId)
                 continue
 
             if 'internalsecret' not in self._configParser[signalingId]:
-                self._logger.error(f"Missing 'internalsecret' property for signaling {signalingId}")
+                self._logger.error("Missing 'internalsecret' property for signaling %s", signalingId)
                 continue
 
             signalingUrl = self._configParser[signalingId]['url'].rstrip('/')
