@@ -100,9 +100,9 @@ def backendRequest(backend, data):
         'User-Agent': recording.USER_AGENT,
     }
 
-    backendRequest = Request('POST', url, headers, data=data)
+    request = Request('POST', url, headers, data=data)
 
-    doRequest(backend, backendRequest)
+    doRequest(backend, request)
 
 def started(backend, token, status, actorType, actorId):
     """
