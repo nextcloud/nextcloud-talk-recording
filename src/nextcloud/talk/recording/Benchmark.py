@@ -51,8 +51,7 @@ class ResourcesTracker:
         self.memoryPercents = []
 
     def start(self, pid, length, stopResourcesTrackerThread):
-        self._thread = Thread(target=self._track, args=[pid, length, stopResourcesTrackerThread], daemon=True)
-        self._thread.start()
+        Thread(target=self._track, args=[pid, length, stopResourcesTrackerThread], daemon=True).start()
 
     def _track(self, pid, length, stopResourcesTrackerThread):
         # Wait a little for the values to stabilize.
@@ -109,6 +108,8 @@ class BenchmarkService:
 
     def __init__(self):
         self._logger = logging.getLogger()
+
+        self._resourcesTracker = ResourcesTracker()
 
         self._display = None
         self._audioModuleIndex = None
@@ -169,15 +170,14 @@ class BenchmarkService:
             recorderArgumentsBuilder.setExtension(f".{extension}")
             self._recorderArguments = recorderArgumentsBuilder.getRecorderArguments(status, self._display.new_display_var, audioSourceIndex, args.width, args.height, extensionlessFileName)
 
-            self._fileName = self._recorderArguments[-1]
+            fileName = self._recorderArguments[-1]
 
-            if os.path.exists(self._fileName):
+            if os.path.exists(fileName):
                 raise Exception("File exists")
 
             self._logger.debug("Starting recorder")
             self._recorderProcess = subprocess.Popen(self._recorderArguments, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 
-            self._resourcesTracker = ResourcesTracker()
             self._resourcesTracker.start(self._recorderProcess.pid, args.length, stopResourcesTrackerThread)
 
             # Log recorder output.
