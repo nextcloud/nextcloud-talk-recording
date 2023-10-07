@@ -25,22 +25,18 @@ Module to join a call with a browser.
 import hashlib
 import hmac
 import json
-import logging
 import re
 import threading
 import websocket
 
 from datetime import datetime
 from secrets import token_urlsafe
-from selenium import webdriver
-from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.webdriver import WebDriver as ChromeDriver
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.firefox.webdriver import WebDriver as FirefoxDriver
-from selenium.webdriver.support.wait import WebDriverWait
 from shutil import disk_usage
 from time import sleep
 

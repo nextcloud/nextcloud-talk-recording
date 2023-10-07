@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from nextcloud.talk.recording import RECORDING_STATUS_AUDIO_AND_VIDEO, RECORDING_STATUS_AUDIO_ONLY
+from nextcloud.talk.recording import RECORDING_STATUS_AUDIO_AND_VIDEO
 from .Config import config
 
 class RecorderArgumentsBuilder:

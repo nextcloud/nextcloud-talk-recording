@@ -31,7 +31,6 @@ from pyvirtualdisplay import Display
 
 from nextcloud.talk.recording import RECORDING_STATUS_AUDIO_AND_VIDEO, RECORDING_STATUS_AUDIO_ONLY
 from .Config import Config
-from .Participant import SeleniumHelper
 from .RecorderArgumentsBuilder import RecorderArgumentsBuilder
 from .Service import newAudioSink, processLog
 
