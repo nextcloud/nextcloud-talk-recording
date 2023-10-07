@@ -290,7 +290,7 @@ class Service:
             return
 
         if not os.path.exists(self._fileName):
-            self._logger.error(f"Recording can not be uploaded, {self._fileName} does not exist")
+            self._logger.error("Recording can not be uploaded, %s does not exist", self._fileName)
 
             return
 

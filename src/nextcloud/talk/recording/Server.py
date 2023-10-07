@@ -74,7 +74,7 @@ def _validateRequest():
 
     secret = config.getBackendSecret(backend)
     if not secret:
-        app.logger.warning(f"No secret configured for backend {backend}")
+        app.logger.warning("No secret configured for backend %s", backend)
         raise Forbidden()
 
     if 'Talk-Recording-Random' not in request.headers:
@@ -92,14 +92,14 @@ def _validateRequest():
     maximumMessageSize = config.getBackendMaximumMessageSize(backend)
 
     if not request.content_length or request.content_length > maximumMessageSize:
-        app.logger.warning(f"Message size above limit: {request.content_length} {maximumMessageSize}")
+        app.logger.warning("Message size above limit: %d %d", request.content_length, maximumMessageSize)
         raise BadRequest()
 
     body = request.get_data()
 
     expectedChecksum = _calculateChecksum(secret, random, body)
     if not hmac.compare_digest(checksum, expectedChecksum):
-        app.logger.warning(f"Checksum verification failed: {checksum} {expectedChecksum}")
+        app.logger.warning("Checksum verification failed: %s %s", checksum, expectedChecksum)
         raise Forbidden()
 
     return backend, json.loads(body)
@@ -142,14 +142,14 @@ def startRecording(backend, token, data):
     service = None
     with servicesLock:
         if serviceId in services:
-            app.logger.warning(f"Trying to start recording again: {backend} {token}")
+            app.logger.warning("Trying to start recording again: %s %s", backend, token)
             return {}
 
         service = Service(backend, token, status, owner)
 
         services[serviceId] = service
 
-    app.logger.info(f"Start recording: {backend} {token}")
+    app.logger.info("Start recording: %s %s", backend, token)
 
     serviceStartThread = Thread(target=_startRecordingService, args=[service, actorType, actorId], daemon=True)
     serviceStartThread.start()
@@ -174,11 +174,11 @@ def _startRecordingService(service, actorType, actorId):
             if serviceId not in services:
                 # Service was already stopped, exception should have been caused
                 # by stopping the helpers even before the recorder started.
-                app.logger.info(f"Recording stopped before starting: {service.backend} {service.token}", exc_info=exception)
+                app.logger.info("Recording stopped before starting: %s %s", service.backend, service.token, exc_info=exception)
 
                 return
 
-            app.logger.exception(f"Failed to start recording: {service.backend} {service.token}")
+            app.logger.exception("Failed to start recording: %s %s", service.backend, service.token)
 
             services.pop(serviceId)
 
@@ -197,11 +197,11 @@ def stopRecording(backend, token, data):
     service = None
     with servicesLock:
         if serviceId not in services and serviceId in servicesStopping:
-            app.logger.info(f"Trying to stop recording again: {backend} {token}")
+            app.logger.info("Trying to stop recording again: %s %s", backend, token)
             return {}
 
         if serviceId not in services:
-            app.logger.warning(f"Trying to stop unknown recording: {backend} {token}")
+            app.logger.warning("Trying to stop unknown recording: %s %s", backend, token)
             raise NotFound()
 
         service = services[serviceId]
@@ -210,7 +210,7 @@ def stopRecording(backend, token, data):
 
         servicesStopping[serviceId] = service
 
-    app.logger.info(f"Stop recording: {backend} {token}")
+    app.logger.info("Stop recording: %s %s", backend, token)
 
     serviceStopThread = Thread(target=_stopRecordingService, args=[service, actorType, actorId], daemon=True)
     serviceStopThread.start()
@@ -231,12 +231,12 @@ def _stopRecordingService(service, actorType, actorId):
     try:
         service.stop(actorType, actorId)
     except Exception:
-        app.logger.exception(f"Failed to stop recording: {service.backend} {service.token}")
+        app.logger.exception("Failed to stop recording: %s %s", service.backend, service.token)
     finally:
         with servicesLock:
             if serviceId not in servicesStopping:
                 # This should never happen.
-                app.logger.error(f"Recording stopped when not in the list of stopping services: {service.backend} {service.token}")
+                app.logger.error("Recording stopped when not in the list of stopping services: %s %s", service.backend, service.token)
 
                 return
 

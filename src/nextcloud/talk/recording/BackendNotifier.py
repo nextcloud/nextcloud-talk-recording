@@ -69,7 +69,7 @@ def doRequest(backend, request, retries=3):
         response.raise_for_status()
     except Exception:
         if retries > 1:
-            logger.exception(f"Failed to send message to backend, {retries} retries left!")
+            logger.exception("Failed to send message to backend, %d retries left!", retries)
             doRequest(backend, request, retries - 1)
         else:
             logger.exception("Failed to send message to backend, giving up!")
@@ -184,7 +184,7 @@ def uploadRecording(backend, token, fileName, owner):
     :param owner: the owner of the uploaded file.
     """
 
-    logger.info(f"Upload recording {fileName} to {backend} in {token} as {owner}")
+    logger.info("Upload recording %s to %s in %s as %s", fileName, backend, token, owner)
 
     url = backend.rstrip('/') + '/ocs/v2.php/apps/spreed/api/v1/recording/' + token + '/store'
 
