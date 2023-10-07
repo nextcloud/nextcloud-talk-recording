@@ -24,12 +24,13 @@ Module to start and stop the recording for a specific call.
 
 import logging
 import os
-import pulsectl
 import subprocess
 from datetime import datetime
-from pyvirtualdisplay import Display
 from secrets import token_urlsafe
 from threading import Event, Thread
+
+import pulsectl
+from pyvirtualdisplay import Display
 
 from . import BackendNotifier
 from .Config import config

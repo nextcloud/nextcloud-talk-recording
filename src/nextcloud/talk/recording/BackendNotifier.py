@@ -27,11 +27,12 @@ import hmac
 import json
 import logging
 import os
-from nextcloud.talk import recording
-from requests import Request, Session
-from requests_toolbelt import MultipartEncoder
 from secrets import token_urlsafe
 
+from requests import Request, Session
+from requests_toolbelt import MultipartEncoder
+
+from nextcloud.talk import recording
 from .Config import config
 
 logger = logging.getLogger(__name__)
