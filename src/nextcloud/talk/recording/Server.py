@@ -237,10 +237,8 @@ def _stopRecordingService(service, actorType, actorId):
             if serviceId not in servicesStopping:
                 # This should never happen.
                 app.logger.error("Recording stopped when not in the list of stopping services: %s %s", service.backend, service.token)
-
-                return
-
-            servicesStopping.pop(serviceId)
+            else:
+                servicesStopping.pop(serviceId)
 
 # Despite this handler it seems that in some cases the geckodriver could have
 # been killed already when it is executed, which unfortunately prevents a proper
