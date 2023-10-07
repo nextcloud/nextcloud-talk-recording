@@ -31,7 +31,6 @@ from pyvirtualdisplay import Display
 from secrets import token_urlsafe
 from threading import Event, Thread
 
-from nextcloud.talk.recording import RECORDING_STATUS_AUDIO_AND_VIDEO, RECORDING_STATUS_AUDIO_ONLY
 from . import BackendNotifier
 from .Config import config
 from .Participant import Participant

@@ -27,8 +27,6 @@ import hmac
 import json
 import logging
 import os
-import requests
-import ssl
 from nextcloud.talk import recording
 from requests import Request, Session
 from requests_toolbelt import MultipartEncoder
