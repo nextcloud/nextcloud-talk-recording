@@ -56,7 +56,7 @@ class Config:
         self._backendIdsByBackendUrl = {}
 
         if 'backend' not in self._configParser or 'backends' not in self._configParser['backend']:
-            self._logger.warning(f"No configured backends")
+            self._logger.warning("No configured backends")
 
             return
 
@@ -79,13 +79,13 @@ class Config:
         self._signalingIdsBySignalingUrl = {}
 
         if 'signaling' not in self._configParser:
-            self._logger.warning(f"No configured signalings")
+            self._logger.warning("No configured signalings")
 
             return
 
         if 'signalings' not in self._configParser['signaling']:
             if 'internalsecret' not in self._configParser['signaling']:
-                self._logger.warning(f"No configured signalings")
+                self._logger.warning("No configured signalings")
 
             return
 
