@@ -31,8 +31,9 @@ from flask import Flask, jsonify, request
 from werkzeug.exceptions import BadRequest, Forbidden, NotFound
 
 from nextcloud.talk import recording
+from nextcloud.talk.recording import RECORDING_STATUS_AUDIO_AND_VIDEO
 from .Config import config
-from .Service import RECORDING_STATUS_AUDIO_AND_VIDEO, Service
+from .Service import Service
 
 app = Flask(__name__)
 
