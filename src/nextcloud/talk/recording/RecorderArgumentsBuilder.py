@@ -80,24 +80,41 @@ class RecorderArgumentsBuilder:
         return ffmpegArguments + [outputFileName]
 
     def getFfmpegCommon(self):
+        """
+        Returns the ffmpeg executable (name or full path) and the global options
+        given to ffmpeg.
+        """
         if self._ffmpegCommon is not None:
             return self._ffmpegCommon
 
         return config.getFfmpegCommon()
 
     def getFfmpegOutputAudio(self):
+        """
+        Returns the options given to ffmpeg to encode the audio output.
+        """
         if self._ffmpegOutputAudio is not None:
             return self._ffmpegOutputAudio
 
         return config.getFfmpegOutputAudio()
 
     def getFfmpegOutputVideo(self):
+        """
+        Returns the options given to ffmpeg to encode the video output.
+        """
         if self._ffmpegOutputVideo is not None:
             return self._ffmpegOutputVideo
 
         return config.getFfmpegOutputVideo()
 
     def getExtension(self, status):
+        """
+        Returns the extension of the output file.
+
+        If no extension was explicitly set the status defines whether the
+        extension will be the one configured for audio recordings or the one
+        configured for video recordings.
+        """
         if self._extension:
             return self._extension
 
@@ -107,13 +124,26 @@ class RecorderArgumentsBuilder:
         return config.getFfmpegExtensionAudio()
 
     def setFfmpegCommon(self, ffmpegCommon):
+        """
+        Sets the ffmpeg executable (name or full path) and the global options
+        given to ffmpeg.
+        """
         self._ffmpegCommon = ffmpegCommon
 
     def setFfmpegOutputAudio(self, ffmpegOutputAudio):
+        """
+        Sets the options given to ffmpeg to encode the audio output.
+        """
         self._ffmpegOutputAudio = ffmpegOutputAudio
 
     def setFfmpegOutputVideo(self, ffmpegOutputVideo):
+        """
+        Sets the options given to ffmpeg to encode the video output.
+        """
         self._ffmpegOutputVideo = ffmpegOutputVideo
 
     def setExtension(self, extension):
+        """
+        Sets the extension of the output file.
+        """
         self._extension = extension

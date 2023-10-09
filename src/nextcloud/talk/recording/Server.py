@@ -43,10 +43,16 @@ servicesLock = Lock()
 
 @app.route("/api/v1/welcome", methods=["GET"])
 def welcome():
+    """
+    Handles welcome requests.
+    """
     return jsonify(version=recording.__version__)
 
 @app.route("/api/v1/room/<token>", methods=["POST"])
 def handleBackendRequest(token):
+    """
+    Handles backend requests.
+    """
     backend, data = _validateRequest()
 
     if 'type' not in data:
@@ -113,6 +119,35 @@ def _calculateChecksum(secret, random, body):
     return hmacValue.hexdigest()
 
 def startRecording(backend, token, data):
+    """
+    Starts the recording in the given backend and room (identified by its
+    token).
+
+    The data must provide the id of the user that will own the recording once
+    uploaded. The data must also provide the type and id of the actor that
+    started the recording, which will be passed back to the backend when sending
+    the request to confirm that the recording was started.
+
+    By default the recording will be a video recording, but an audio recording
+    can be started instead if provided in the data.
+
+    Expected data format:
+    data = {
+      'type' = 'start',
+      'start' = {
+        'owner' = #STRING#,
+        'actor' = {
+          'type' = #STRING#,
+          'id' = #STRING#,
+        },
+        'status' = #INTEGER#, // Optional
+      }
+    }
+
+    :param backend: the backend that send the request.
+    :param token: the token of the room to start the recording in.
+    :param data: the data used to start the recording.
+    """
     serviceId = f'{backend}-{token}'
 
     if 'start' not in data:
@@ -183,6 +218,28 @@ def _startRecordingService(service, actorType, actorId):
             services.pop(serviceId)
 
 def stopRecording(backend, token, data):
+    """
+    Stops the recording in the given backend and room (identified by its token).
+
+    If the data provides the type and id of the actor that stopped the recording
+    this will be passed back to the backend when sending the request to confirm
+    that the recording was stopped.
+
+    Expected data format:
+    data = {
+      'type' = 'stop',
+      'stop' = {
+        'actor' = { // Optional
+          'type' = #STRING#,
+          'id' = #STRING#,
+        },
+      }
+    }
+
+    :param backend: the backend that send the request.
+    :param token: the token of the room to stop the recording in.
+    :param data: the data used to stop the recording.
+    """
     serviceId = f'{backend}-{token}'
 
     if 'stop' not in data:

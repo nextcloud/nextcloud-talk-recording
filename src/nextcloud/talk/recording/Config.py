@@ -52,6 +52,12 @@ class Config:
         self._signalingIdsBySignalingUrl = {}
 
     def load(self, fileName):
+        """
+        Loads the configuration from the given file name.
+
+        :param fileName: the absolute or relative (to the current working
+               directory) path to the configuration file.
+        """
         fileName = os.path.abspath(fileName)
 
         if not os.path.exists(fileName):

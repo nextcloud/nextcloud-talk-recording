@@ -55,6 +55,13 @@ class ResourcesTracker:
         self.memoryPercents = []
 
     def start(self, pid, length, stopResourcesTrackerThread):
+        """
+        Starts tracking the resources used by the given PID.
+
+        The tracker will automatically end after the given length in seconds.
+        The tracker can be aborted earlier by setting the given
+        stopResourcesTrackerThread event.
+        """
         Thread(target=self._track, args=[pid, length, stopResourcesTrackerThread], daemon=True).start()
 
     def _track(self, pid, length, stopResourcesTrackerThread):
@@ -129,6 +136,13 @@ class BenchmarkService:
         self._stopHelpers()
 
     def run(self, args):
+        """
+        Runs the benchmark.
+
+        This method blocks until the recording ends.
+
+        :param args: the parsed arguments given in the command line.
+        """
         directory = os.path.dirname(args.output)
 
         stopResourcesTrackerThread = Event()
@@ -221,15 +235,37 @@ class BenchmarkService:
             self._averageMemoryPercents /= len(self._resourcesTracker.memoryPercents)
 
     def getRecorderArguments(self):
+        """
+        Returns the arguments used to start the recorder process.
+        """
         return self._recorderArguments
 
     def getAverageCpuPercents(self):
+        """
+        Returns the average CPU percent used by the recorder process.
+
+        The value is available only once the recorder process has finished.
+        """
         return self._averageCpuPercents
 
     def getAverageMemoryInfos(self):
+        """
+        Returns the average memory values used by the recorder process.
+
+        The returned value is a dictionary with "rss" ("Resident set size", the
+        RAM memory currently used by the process) and "vms" ("Virtual memory
+        size", the maximum memory that could be used by the process) keys.
+
+        The values are available only once the recorder process has finished.
+        """
         return self._averageMemoryInfos
 
     def getAverageMemoryPercents(self):
+        """
+        Returns the average memory percent used by the recorder process.
+
+        The value is available only once the recorder process has finished.
+        """
         return self._averageMemoryPercents
 
     def _stopHelpers(self):
@@ -275,6 +311,9 @@ class BenchmarkService:
 benchmarkService = None
 
 def main():
+    """
+    Runs the benchmark with the arguments given in the command line.
+    """
     defaultConfig = Config()
 
     parser = argparse.ArgumentParser()
