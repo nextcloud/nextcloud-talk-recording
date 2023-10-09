@@ -17,6 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""
+Module to provide the command line interface for the benchmark.
+"""
+
 import argparse
 import atexit
 import logging
