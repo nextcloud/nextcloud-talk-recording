@@ -31,6 +31,18 @@ import os
 from configparser import ConfigParser
 
 class Config:
+    """
+    Class for the configuration.
+
+    The configuration values are loaded from a configuration file, but all the
+    properties have a default value if the value is not explicitly set in the
+    loaded configuration file.
+
+    There is a getter method for each of the configuration values. If the value
+    can be overriden by a backend the URL of the backend needs to be given to
+    get the value.
+    """
+
     def __init__(self):
         self._logger = logging.getLogger(__name__)
 
