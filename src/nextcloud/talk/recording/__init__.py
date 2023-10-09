@@ -18,6 +18,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""
+Module to initialize the package.
+"""
+
 __version__ = 0.1
 
 RECORDING_STATUS_AUDIO_AND_VIDEO = 1
