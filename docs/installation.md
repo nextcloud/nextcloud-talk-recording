@@ -16,7 +16,7 @@ Finally disk size will also depend on the number of simultaneous recordings, as 
 
 The recording server can be installed using system packages in some GNU/Linux distributions. A "manual" installation is required for others.
 
-In both cases the master branch of the [Nextcloud Talk repository](https://github.com/nextcloud/spreed) should be cloned. Currently the recording server in the master branch is backwards compatible with previous Talk releases, and the stable branches do not receive bug fixes for the recording server, as the latest version from the master branch is expected to be used.
+In both cases the main branch of the [Nextcloud Talk Recording Server repository](https://github.com/nextcloud/nextcloud-talk-recording) should be cloned. Currently the recording server in the main branch is backwards compatible with previous Talk releases, so the latest version from the main branch is expected to be used.
 
 ### System packages
 
@@ -94,8 +94,8 @@ Those dependencies must be installed, typically using the package manager of the
 
 Then, the recording server and all its Python dependencies can be installed using Python pip. Note that the recording server is not available in the Python Package Index (PyPI); you need to manually clone the git repository and then install it from there:
 ```
-git clone https://github.com/nextcloud/spreed
-python3 -m pip install spreed/recording
+git clone https://github.com/nextcloud/nextcloud-talk-recording
+python3 -m pip install nextcloud-talk-recording
 ```
 
 The recording server does not need to be run as root (and it should not be run as root). It can be started as a regular user with `nextcloud-talk-recording --config {PATH_TO_THE_CONFIGURATION_FILE)` (or, if the helper script is not available, directly with `python3 -m nextcloud.talk.recording --config {PATH_TO_THE_CONFIGURATION_FILE)`. Nevertheless, please note that the user needs to have a home directory.

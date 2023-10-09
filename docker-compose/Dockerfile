@@ -8,7 +8,7 @@ RUN apt-get --assume-yes upgrade
 # Common dependencies
 RUN apt-get --assume-yes install software-properties-common
 
-# spreed-recording dependencies
+# nextcloud-talk-recording dependencies
 RUN apt-get --assume-yes install ffmpeg pulseaudio python3-pip xvfb
 RUN pip3 install --upgrade requests
 
@@ -27,7 +27,7 @@ RUN apt-get --assume-yes install chromium
 COPY ./docker-compose/wrap_chromium_binary /opt/bin/wrap_chromium_binary
 RUN /opt/bin/wrap_chromium_binary
 
-# spreed-recording config
+# nextcloud-talk-recording config
 RUN useradd --create-home recording
 COPY server.conf.in /etc/nextcloud-talk-recording/server.conf
 RUN sed --in-place 's/#listen =.*/listen = 0.0.0.0:8000/' /etc/nextcloud-talk-recording/server.conf
