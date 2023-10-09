@@ -77,7 +77,7 @@ class BiDiLogsHelper:
         self.initialLogsLock = threading.Lock()
         self.initialLogsLock.acquire()
 
-        self.loggingThread = threading.Thread(target=self.__processLogEvents, daemon=True)
+        self.loggingThread = threading.Thread(target=self._processLogEvents, daemon=True)
         self.loggingThread.start()
 
         # Do not return until the existing logs were fetched, except if it is
@@ -91,7 +91,7 @@ class BiDiLogsHelper:
         if self.loggingThread:
             self.loggingThread.join()
 
-    def __messageFromEvent(self, event):
+    def _messageFromEvent(self, event):
         if not 'params' in event:
             return '???'
 
@@ -127,7 +127,7 @@ class BiDiLogsHelper:
 
         return time + ' ' + methodShort + ' ' + text
 
-    def __processLogEvents(self):
+    def _processLogEvents(self):
         while True:
             try:
                 event = json.loads(self.websocket.recv())
@@ -142,7 +142,7 @@ class BiDiLogsHelper:
             if not 'method' in event or event['method'] != 'log.entryAdded':
                 continue
 
-            message = self.__messageFromEvent(event)
+            message = self._messageFromEvent(event)
 
             with self.logsLock:
                 if self.realtimeLogsEnabled:
