@@ -45,3 +45,12 @@ function-naming-style = 'camelCase'
 method-naming-style = 'camelCase'
 module-naming-style = 'PascalCase'
 variable-naming-style = 'camelCase'
+
+disable = [
+    "line-too-long",
+    "too-few-public-methods",
+    "too-many-arguments",
+    "too-many-instance-attributes",
+    "too-many-locals",
+    "too-many-statements",
+]
