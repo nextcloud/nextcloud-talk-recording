@@ -36,7 +36,7 @@ RUN sed --in-place 's/#listen =.*/listen = 0.0.0.0:8000/' /etc/nextcloud-talk-re
 RUN mkdir --parents /tmp/recording
 COPY src /tmp/recording/
 COPY pyproject.toml /tmp/recording/
-RUN python3 -m pip install /tmp/recording/
+RUN python3 -m pip install file:///tmp/recording/
 
 # Cleanup
 RUN apt-get clean && rm --recursive --force /var/lib/apt/lists/* /tmp/* /var/tmp/*

@@ -95,7 +95,7 @@ Those dependencies must be installed, typically using the package manager of the
 Then, the recording server and all its Python dependencies can be installed using Python pip. Note that the recording server is not available in the Python Package Index (PyPI); you need to manually clone the git repository and then install it from there:
 ```
 git clone https://github.com/nextcloud/nextcloud-talk-recording
-python3 -m pip install nextcloud-talk-recording
+python3 -m pip install "file://$(pwd)/nextcloud-talk-recording"
 ```
 
 The recording server does not need to be run as root (and it should not be run as root). It can be started as a regular user with `nextcloud-talk-recording --config {PATH_TO_THE_CONFIGURATION_FILE)` (or, if the helper script is not available, directly with `python3 -m nextcloud.talk.recording --config {PATH_TO_THE_CONFIGURATION_FILE)`. Nevertheless, please note that the user needs to have a home directory.

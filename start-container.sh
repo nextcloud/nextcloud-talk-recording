@@ -190,7 +190,7 @@ if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER$")" ]; then
 	docker cp . $CONTAINER:/tmp/recording/
 
 	echo "Installing recording backend inside container"
-	docker exec $CONTAINER python3 -m pip install /tmp/recording/
+	docker exec $CONTAINER python3 -m pip install file:///tmp/recording/
 
 	echo "Copying configuration from server.conf.in to /etc/nextcloud-talk-recording/server.conf"
 	docker exec $CONTAINER mkdir --parent /etc/nextcloud-talk-recording/
