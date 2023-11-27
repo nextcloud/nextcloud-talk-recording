@@ -209,6 +209,12 @@ Once the configuration is done it is recommended to record a call to verify that
 
 If something did not work as expected please check below for some possible causes.
 
+### No configured signaling secret for `signaling-server-url`
+
+This error will be logged when a recording was started, but the recording server is unable to determine the secret for the signaling server. In this case:
+- Verify that the `url` parameter of the signaling configuration is correct
+- Check that you're using the same URL scheme (`https://` vs. `wss://`) for the signaling server in your nextcloud instance and the recording server
+
 ### The recording is stuck in _Starting_ but never starts nor fails
 
 It is very likely that the recording server could not send the request to mark the recording as started or failed. It is typically one of the cases below:
