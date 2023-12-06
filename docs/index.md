@@ -2,6 +2,7 @@
 
 ## Setup
 
+* [Building](building.md)
 * [Installation](installation.md)
 
 ### Configuration
