@@ -14,26 +14,15 @@ Finally disk size will also depend on the number of simultaneous recordings, as 
 
 ## Installation type
 
-The recording server can be installed using system packages in some GNU/Linux distributions. A "manual" installation is required for others.
+* For customers pre-built packages are available, please refer to [the Nextcloud Talk Recording Server section of the portal](https://portal.nextcloud.com/article/Installation/Installation---Nextcloud-Talk-Recording-Server).
+* For some GNU/Linux distributions the installation can be done through packages. Please see the [instructions to build packages](https://github.com/nextcloud/nextcloud-talk-recording/blob/main/docs/building.md).
+* A ["manual" installation](https://github.com/nextcloud/nextcloud-talk-recording/blob/main/docs/installation.md#manual-installation) is required in all other cases.
 
-In both cases the main branch of the [Nextcloud Talk Recording Server repository](https://github.com/nextcloud/nextcloud-talk-recording) should be cloned. Currently the recording server in the main branch is backwards compatible with previous Talk releases, so the latest version from the main branch is expected to be used.
+### Prerequisites
 
-### System packages
+Before packages can be installed using the package managers of the distributions, some distributions have additional requirements that need to be fulfilled first.
 
-Distribution packages are supported for the following GNU/Linux distributions:
-- Debian 11
-- Ubuntu 20.04
-- Ubuntu 22.04
-
-They can be built on those distributions by calling `make` in the _recording/packaging_ directory of the git sources. Nevertheless, the Makefile assumes that the build dependencies have been already installed in the system. Therefore it is recommended to run `build.sh` in the _recording/packaging_ directory, which will create Docker containers with the required dependencies and then run `make` inside them. Alternatively the dependencies can be checked under `Installing required build dependencies` in `build.sh` and manually installed in the system. Using `build.sh` the packages can be built for those target distributions on other distributions too.
-
-The built packages can be found in _recording/packaging/build/{DISTRIBUTION-ID}/{PACKAGE-FORMAT}/_ (even if they were built inside the Docker containers using `build.sh`). They include the recording server itself (_nextcloud-talk-recording_) as well as the Python3 dependencies that are not included in the repositories of the distributions. Note that the built dependencies change depending on the distribution type and version.
-
-#### Prerequisites
-
-Once built the packages can be installed using the package managers of the distributions, although some distributions have additional requirements that need to be fulfilled first.
-
-##### Debian 11
+#### Debian 11
 
 In Debian 11 there is no _geckodriver_ package, which is required to control Firefox from the recording server. Therefore the [PPA from Mozilla](https://launchpad.net/~mozillateam/+archive/ubuntu/ppa) needs to be setup instead before installing the packages. Although `add-apt-repository` is available in Debian 11 the PPA does not provide packages for _bullseye_, so the PPA needs to be manually added to use the packages for _focal_ (Ubuntu 20.04):
 ```
@@ -50,7 +39,7 @@ Pin-Priority: 1001
 ' | sudo tee /etc/apt/preferences.d/mozilla-firefox
 ```
 
-##### Ubuntu 22.04
+#### Ubuntu 22.04
 
 In Ubuntu 22.04 the normal Firefox package was replaced by a Snap. Unfortunately the Snap package can not be used with the default packages, so the [PPA from Mozilla](https://launchpad.net/~mozillateam/+archive/ubuntu/ppa) needs to be setup instead before installing the packages (`add-apt-repository` is included in the package `software-properties-common`):
 ```
@@ -66,7 +55,9 @@ Pin-Priority: 1001
 ' | sudo tee /etc/apt/preferences.d/mozilla-firefox
 ```
 
-#### Built packages installation
+### Built packages installation
+
+**Note:** This only applies to manually build packages!
 
 In Debian and Ubuntu the built packages can be installed by first changing to the _recording/packaging/build/{DISTRIBUTION-ID}/deb/_ directory and then running:
 ```
@@ -80,6 +71,8 @@ Besides installing the recording server and its dependencies a _nextcloud-talk-r
 Although it is possible to configure the recording server to use Chromium/Chrome instead of Firefox only Firefox is officially supported, so only Firefox is a dependency of the `nextcloud-talk-recording` package. In order to use Chromium/Chrome it needs to be manually installed.
 
 ### Manual installation
+
+Please make sure you cloned the main branch of the [Nextcloud Talk Recording Server repository](https://github.com/nextcloud/nextcloud-talk-recording). Currently the recording server in the main branch is backwards compatible with previous Talk releases, so the latest version from the main branch is expected to be used.
 
 The recording server has the following non-Python dependencies:
 - FFmpeg
