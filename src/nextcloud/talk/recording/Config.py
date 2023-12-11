@@ -31,6 +31,18 @@ import os
 from configparser import ConfigParser
 
 class Config:
+    """
+    Class for the configuration.
+
+    The configuration values are loaded from a configuration file, but all the
+    properties have a default value if the value is not explicitly set in the
+    loaded configuration file.
+
+    There is a getter method for each of the configuration values. If the value
+    can be overriden by a backend the URL of the backend needs to be given to
+    get the value.
+    """
+
     def __init__(self):
         self._logger = logging.getLogger(__name__)
 
@@ -40,12 +52,18 @@ class Config:
         self._signalingIdsBySignalingUrl = {}
 
     def load(self, fileName):
+        """
+        Loads the configuration from the given file name.
+
+        :param fileName: the absolute or relative (to the current working
+               directory) path to the configuration file.
+        """
         fileName = os.path.abspath(fileName)
 
         if not os.path.exists(fileName):
-            self._logger.warning(f"Configuration file not found: {fileName}")
+            self._logger.warning("Configuration file not found: %s", fileName)
         else:
-            self._logger.info(f"Loading {fileName}")
+            self._logger.info("Loading %s", fileName)
 
         self._configParser.read(fileName)
 
@@ -56,7 +74,7 @@ class Config:
         self._backendIdsByBackendUrl = {}
 
         if 'backend' not in self._configParser or 'backends' not in self._configParser['backend']:
-            self._logger.warning(f"No configured backends")
+            self._logger.warning("No configured backends")
 
             return
 
@@ -65,11 +83,11 @@ class Config:
 
         for backendId in backendIds:
             if 'url' not in self._configParser[backendId]:
-                self._logger.error(f"Missing 'url' property for backend {backendId}")
+                self._logger.error("Missing 'url' property for backend %s", backendId)
                 continue
 
             if 'secret' not in self._configParser[backendId]:
-                self._logger.error(f"Missing 'secret' property for backend {backendId}")
+                self._logger.error("Missing 'secret' property for backend %s", backendId)
                 continue
 
             backendUrl = self._configParser[backendId]['url'].rstrip('/')
@@ -79,13 +97,13 @@ class Config:
         self._signalingIdsBySignalingUrl = {}
 
         if 'signaling' not in self._configParser:
-            self._logger.warning(f"No configured signalings")
+            self._logger.warning("No configured signalings")
 
             return
 
         if 'signalings' not in self._configParser['signaling']:
             if 'internalsecret' not in self._configParser['signaling']:
-                self._logger.warning(f"No configured signalings")
+                self._logger.warning("No configured signalings")
 
             return
 
@@ -94,11 +112,11 @@ class Config:
 
         for signalingId in signalingIds:
             if 'url' not in self._configParser[signalingId]:
-                self._logger.error(f"Missing 'url' property for signaling {signalingId}")
+                self._logger.error("Missing 'url' property for signaling %s", signalingId)
                 continue
 
             if 'internalsecret' not in self._configParser[signalingId]:
-                self._logger.error(f"Missing 'internalsecret' property for signaling {signalingId}")
+                self._logger.error("Missing 'internalsecret' property for signaling %s", signalingId)
                 continue
 
             signalingUrl = self._configParser[signalingId]['url'].rstrip('/')
