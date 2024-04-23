@@ -64,6 +64,8 @@ def handleBackendRequest(token):
     if data['type'] == 'stop':
         return stopRecording(backend, token, data)
 
+    raise BadRequest()
+
 def _validateRequest():
     """
     Validates the current request.
