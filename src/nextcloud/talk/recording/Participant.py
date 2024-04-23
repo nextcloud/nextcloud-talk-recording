@@ -418,7 +418,7 @@ class SeleniumHelper:
 
         # Add an explicit return point at the end of the script if none is
         # given.
-        if re.search('returnResolve\(.*\)', script) is None:
+        if re.search('returnResolve\\(.*\\)', script) is None:
             script += '; returnResolve()'
 
         # await is not valid in the root context in Firefox, so the script to be
