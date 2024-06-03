@@ -26,6 +26,7 @@ build-backend = "setuptools.build_meta"
 [project.optional-dependencies]
 dev = [
     "pylint>=2.9",
+    "pytest>=6.0",
 ]
 
 [project.urls]
@@ -60,3 +61,11 @@ disable = [
     "broad-exception-caught",
     "broad-exception-raised",
 ]
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
+python_files = "*Test.py"
+python_classes = "*Test"
+python_functions = "test*"
