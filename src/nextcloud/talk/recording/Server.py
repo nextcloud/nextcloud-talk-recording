@@ -31,7 +31,9 @@ from ipaddress import ip_address
 from threading import Lock, Thread
 
 from flask import Flask, jsonify, request
+from prometheus_client import make_wsgi_app
 from werkzeug.exceptions import BadRequest, Forbidden, NotFound
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
 from nextcloud.talk import recording
 from nextcloud.talk.recording import RECORDING_STATUS_AUDIO_AND_VIDEO
@@ -166,6 +168,10 @@ class TrustedProxiesFix:
 
 app = Flask(__name__)
 app.wsgi_app = TrustedProxiesFix(app.wsgi_app, config)
+
+app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {
+    '/metrics': make_wsgi_app()
+})
 
 services = {}
 servicesStopping = {}

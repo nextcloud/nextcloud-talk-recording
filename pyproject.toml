@@ -10,6 +10,7 @@ classifiers = [
 ]
 dependencies = [
     "flask",
+    "prometheus-client",
     "psutil",
     "pulsectl",
     "pyvirtualdisplay>=2.0",
