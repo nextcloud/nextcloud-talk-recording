@@ -26,7 +26,7 @@ build-backend = "setuptools.build_meta"
 [project.optional-dependencies]
 dev = [
     "pylint>=2.9",
-    "pytest>=6.0",
+    "pytest>=6.0.1",
 ]
 
 [project.urls]

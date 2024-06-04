@@ -25,6 +25,9 @@ import atexit
 import json
 import hashlib
 import hmac
+import logging
+import re
+from ipaddress import ip_address
 from threading import Lock, Thread
 
 from flask import Flask, jsonify, request
@@ -35,7 +38,134 @@ from nextcloud.talk.recording import RECORDING_STATUS_AUDIO_AND_VIDEO
 from .Config import config
 from .Service import Service
 
+def isAddressInNetworks(address, networks):
+    """
+    Returns whether the given IP address belongs to any of the given IP
+    networks.
+
+    :param address: the IPv4Address or IPv6Address.
+    :param networks: a list of IPv4Network and/or IPv6Network.
+    :return: True if the address is in any network of the list, False otherwise.
+    """
+    for network in networks:
+        if address in network:
+            return True
+
+    return False
+
+class TrustedProxiesFix:
+    """
+    Middleware to adjust the remote address in the WSGI environment based on the
+    configured trusted proxies.
+    """
+
+    # pylint: disable=redefined-outer-name
+    def __init__(self, app, config):
+        self._app = app
+        self._config = config
+
+    def __call__(self, environment, startResponse):
+        """
+        Modifies REMOTE_ADDR in the WSGI environment based on the
+        "Forwarded-For" header before calling the wrapped application.
+        """
+
+        try:
+            environment['REMOTE_ADDR'] = self.getRemoteAddress(environment)
+        except ValueError as valueError:
+            logging.getLogger(__name__).error("The remote address of the request could not be got: %s", valueError)
+
+        return self._app(environment, startResponse)
+
+    def getRemoteAddress(self, environment):
+        """
+        Returns the "real" remote address based on the environment and the
+        configured trusted proxies.
+
+        If the original remote address comes from a trusted proxy, the "real"
+        remote address is the right-most entry in the "X-Forwarded-For" header
+        that does not belong to a trusted proxy (or the last one belonging to a
+        trusted proxy if the entry to its left is invalid or there are no more
+        entries).
+
+        Only IP addresses are taken into account in the "X-Forwarded-For" header
+        (optionally with a port, which will be ignored); hostnames or other ids
+        will be treated as an invalid entry.
+
+        It is expected that if several "X-Forwarded-For" headers were included
+        in the request the "X-Forwarded-For" entry in the environment includes
+        all of them separated by commas and in the same order.
+
+        ValueError is raised if REMOTE_ADDR is not included in the environment,
+        or if it is empty; none of that should happen, though.
+
+        :return: the "real" remote address.
+        :raises ValueError: if there is no REMOTE_ADDR in the given environment.
+        """
+
+        if 'REMOTE_ADDR' not in environment:
+            raise ValueError('No REMOTE_ADDR in environment')
+
+        remoteAddress = environment['REMOTE_ADDR']
+        remoteAddress = self._getAddressWithoutPort(remoteAddress)
+        remoteAddress = ip_address(remoteAddress)
+
+        if 'HTTP_X_FORWARDED_FOR' not in environment:
+            return environment['REMOTE_ADDR']
+
+        trustedProxies = self._config.getTrustedProxies()
+
+        if not isAddressInNetworks(remoteAddress, trustedProxies):
+            return environment['REMOTE_ADDR']
+
+        forwardedFor = environment['HTTP_X_FORWARDED_FOR']
+        forwardedFor = [forwarded.strip() for forwarded in forwardedFor.split(',')]
+        forwardedFor.reverse()
+
+        candidateAddress = remoteAddress.compressed
+
+        for forwarded in forwardedFor:
+            forwarded = self._getAddressWithoutPort(forwarded)
+            try:
+                forwarded = ip_address(forwarded)
+            except ValueError:
+                return candidateAddress
+
+            if not isAddressInNetworks(forwarded, trustedProxies):
+                return forwarded.compressed
+
+            candidateAddress = forwarded.compressed
+
+        return candidateAddress
+
+    def _getAddressWithoutPort(self, address):
+        """
+        Returns the address stripping the trailing port, if any.
+
+        "[]" are also stripped from IPv6 addresses, even if there was no port.
+
+        No validation is performed on the input address, the port is removed
+        assuming a valid input. Due to that the returned address is not
+        guaranteed to be a valid address.
+
+        :param address: the address as a string.
+        :return: the address without port.
+        """
+        colons = address.count(':')
+        if colons > 1:
+            # IPv6, might or might not have brackets and/or port, but we are
+            # only interested in the content between brackets, if any.
+            addressInBracketsMatch = re.match('\\[(.*)\\]', address)
+            if addressInBracketsMatch and len(addressInBracketsMatch.groups()) == 1:
+                return addressInBracketsMatch.group(1)
+        elif colons == 1:
+            # IPv4 with trailing ":port"
+            return address[:address.find(':')]
+
+        return address
+
 app = Flask(__name__)
+app.wsgi_app = TrustedProxiesFix(app.wsgi_app, config)
 
 services = {}
 servicesStopping = {}
