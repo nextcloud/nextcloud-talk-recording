@@ -28,6 +28,8 @@ loaded with the configuration file at startup.
 import logging
 import os
 
+from ipaddress import ip_network
+
 from configparser import ConfigParser
 
 class Config:
@@ -48,6 +50,7 @@ class Config:
 
         self._configParser = ConfigParser()
 
+        self._trustedProxies = []
         self._backendIdsByBackendUrl = {}
         self._signalingIdsBySignalingUrl = {}
 
@@ -67,8 +70,26 @@ class Config:
 
         self._configParser.read(fileName)
 
+        self._loadTrustedProxies()
         self._loadBackends()
         self._loadSignalings()
+
+    def _loadTrustedProxies(self):
+        self._trustedProxies = []
+
+        if 'app' not in self._configParser or 'trustedproxies' not in self._configParser['app']:
+            return
+
+        trustedProxies = self._configParser.get('app', 'trustedproxies')
+        trustedProxies = [trustedProxy.strip() for trustedProxy in trustedProxies.split(',')]
+
+        for trustedProxy in trustedProxies:
+            try:
+                trustedProxy = ip_network(trustedProxy)
+
+                self._trustedProxies.append(trustedProxy)
+            except ValueError as valueError:
+                self._logger.error("Invalid trusted proxy: %s", valueError)
 
     def _loadBackends(self):
         self._backendIdsByBackendUrl = {}
@@ -137,6 +158,17 @@ class Config:
         Defaults to "127.0.0.1:8000".
         """
         return self._configParser.get('http', 'listen', fallback='127.0.0.1:8000')
+
+    def getTrustedProxies(self):
+        """
+        Returns the list of trusted proxies.
+
+        All proxies are returned as an IPv4Network or IPv6Network, even if they
+        are a single IP address.
+
+        Defaults to an empty list.
+        """
+        return self._trustedProxies
 
     def getBackendSecret(self, backendUrl):
         """

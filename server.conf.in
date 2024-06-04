@@ -12,6 +12,11 @@
 # IP and port to listen on for HTTP requests.
 #listen = 127.0.0.1:8000
 
+[app]
+# Comma separated list of trusted proxies (IPs or CIDR networks) that may set
+# the "X-Forwarded-For" header.
+#trustedproxies =
+
 [backend]
 # Allow any hostname as backend endpoint. This is extremely insecure and should
 # only be used during development.
