@@ -12,3 +12,7 @@
 ## API
 
 * [Recording API](recording-api.md)
+
+## Other
+
+* [Prometheus metrics](prometheus-metrics.md)
