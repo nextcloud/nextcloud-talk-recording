@@ -126,3 +126,9 @@
 # Allowed values: firefox, chrome
 # Defaults to firefox
 # browser = firefox
+
+[stats]
+# Comma-separated list of IP addresses (or CIDR networks) that are allowed to
+# access the stats endpoint.
+# Leave commented to only allow access from "127.0.0.1".
+#allowed_ips =

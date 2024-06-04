@@ -53,6 +53,7 @@ class Config:
         self._trustedProxies = []
         self._backendIdsByBackendUrl = {}
         self._signalingIdsBySignalingUrl = {}
+        self._statsAllowedIps = []
 
     def load(self, fileName):
         """
@@ -73,6 +74,7 @@ class Config:
         self._loadTrustedProxies()
         self._loadBackends()
         self._loadSignalings()
+        self._loadStatsAllowedIps()
 
     def _loadTrustedProxies(self):
         self._trustedProxies = []
@@ -142,6 +144,25 @@ class Config:
 
             signalingUrl = self._configParser[signalingId]['url'].rstrip('/')
             self._signalingIdsBySignalingUrl[signalingUrl] = signalingId
+
+    def _loadStatsAllowedIps(self):
+        self._statsAllowedIps = []
+
+        if 'stats' not in self._configParser or 'allowed_ips' not in self._configParser['stats']:
+            self._statsAllowedIps.append(ip_network('127.0.0.1'))
+
+            return
+
+        allowedIps = self._configParser.get('stats', 'allowed_ips')
+        allowedIps = [allowedIp.strip() for allowedIp in allowedIps.split(',')]
+
+        for allowedIp in allowedIps:
+            try:
+                allowedIp = ip_network(allowedIp)
+
+                self._statsAllowedIps.append(allowedIp)
+            except ValueError as valueError:
+                self._logger.error("Invalid allowed IP %s", valueError)
 
     def getLogLevel(self):
         """
@@ -303,5 +324,16 @@ class Config:
         Defaults to "firefox".
         """
         return self._configParser.get('recording', 'browser', fallback='firefox')
+
+    def getStatsAllowedIps(self):
+        """
+        Returns the list of IPs allowed to query the stats.
+
+        All IPs are returned as an IPv4Network or IPv6Network, even if they are
+        a single IP address.
+
+        Defaults to ['127.0.0.1'].
+        """
+        return self._statsAllowedIps
 
 config = Config()

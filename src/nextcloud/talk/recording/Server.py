@@ -166,11 +166,38 @@ class TrustedProxiesFix:
 
         return address
 
+class ProtectedMetrics:
+    """
+    Middleware to serve the metrics only if the remote address is allowed to
+    access them.
+    """
+
+    # pylint: disable=redefined-outer-name
+    def __init__(self, config):
+        self.config = config
+        self.metrics = make_wsgi_app()
+
+    def __call__(self, environment, startResponse):
+        """
+        Returns the metrics if the remote address is allowed to access them, or
+        an error 403 if not.
+        """
+
+        remoteAddress = environment['REMOTE_ADDR']
+        remoteAddress = ip_address(remoteAddress)
+
+        if not isAddressInNetworks(remoteAddress, config.getStatsAllowedIps()):
+            startResponse('403 FORBIDDEN', [])
+
+            return []
+
+        return self.metrics(environment, startResponse)
+
 app = Flask(__name__)
 app.wsgi_app = TrustedProxiesFix(app.wsgi_app, config)
 
 app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {
-    '/metrics': make_wsgi_app()
+    '/metrics': TrustedProxiesFix(ProtectedMetrics(config), config)
 })
 
 services = {}
