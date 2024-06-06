@@ -179,7 +179,7 @@ if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-ubuntu22.04$")" ]
 	# Even with virtualenv there is no proper virtual environment, so the build
 	# dependencies specified in pyproject.toml need to be installed system wide.
 	docker exec $CONTAINER-ubuntu22.04 bash -c "apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install --assume-yes make python3 python3-pip python3-virtualenv python3-build python3-stdeb python3-all debhelper dh-python git dh-exec"
-	docker exec $CONTAINER-ubuntu22.04 bash -c "python3 -m pip install 'setuptools >= 61.0, < 69.3'"
+	docker exec $CONTAINER-ubuntu22.04 bash -c "python3 -m pip install 'setuptools >= 69.3'"
 	# Some packages need to be installed so the unit tests can be run in the
 	# packages being built.
 	docker exec $CONTAINER-ubuntu22.04 bash -c "apt-get install --assume-yes pulseaudio python3-async-generator python3-trio python3-wsproto"
