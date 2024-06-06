@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   run-python-lint:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         python-versions: [ '3.8', '3.11' ]
