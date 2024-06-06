@@ -17,7 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from nextcloud.talk.recording import RECORDING_STATUS_AUDIO_AND_VIDEO, RECORDING_STATUS_AUDIO_ONLY
+"""
+Module to get the arguments to start the recorder process.
+"""
+
+from nextcloud.talk.recording import RECORDING_STATUS_AUDIO_AND_VIDEO
 from .Config import config
 
 class RecorderArgumentsBuilder:
@@ -76,24 +80,41 @@ class RecorderArgumentsBuilder:
         return ffmpegArguments + [outputFileName]
 
     def getFfmpegCommon(self):
-        if self._ffmpegCommon != None:
+        """
+        Returns the ffmpeg executable (name or full path) and the global options
+        given to ffmpeg.
+        """
+        if self._ffmpegCommon is not None:
             return self._ffmpegCommon
 
         return config.getFfmpegCommon()
 
     def getFfmpegOutputAudio(self):
-        if self._ffmpegOutputAudio != None:
+        """
+        Returns the options given to ffmpeg to encode the audio output.
+        """
+        if self._ffmpegOutputAudio is not None:
             return self._ffmpegOutputAudio
 
         return config.getFfmpegOutputAudio()
 
     def getFfmpegOutputVideo(self):
-        if self._ffmpegOutputVideo != None:
+        """
+        Returns the options given to ffmpeg to encode the video output.
+        """
+        if self._ffmpegOutputVideo is not None:
             return self._ffmpegOutputVideo
 
         return config.getFfmpegOutputVideo()
 
     def getExtension(self, status):
+        """
+        Returns the extension of the output file.
+
+        If no extension was explicitly set the status defines whether the
+        extension will be the one configured for audio recordings or the one
+        configured for video recordings.
+        """
         if self._extension:
             return self._extension
 
@@ -103,13 +124,26 @@ class RecorderArgumentsBuilder:
         return config.getFfmpegExtensionAudio()
 
     def setFfmpegCommon(self, ffmpegCommon):
+        """
+        Sets the ffmpeg executable (name or full path) and the global options
+        given to ffmpeg.
+        """
         self._ffmpegCommon = ffmpegCommon
 
     def setFfmpegOutputAudio(self, ffmpegOutputAudio):
+        """
+        Sets the options given to ffmpeg to encode the audio output.
+        """
         self._ffmpegOutputAudio = ffmpegOutputAudio
 
     def setFfmpegOutputVideo(self, ffmpegOutputVideo):
+        """
+        Sets the options given to ffmpeg to encode the video output.
+        """
         self._ffmpegOutputVideo = ffmpegOutputVideo
 
     def setExtension(self, extension):
+        """
+        Sets the extension of the output file.
+        """
         self._extension = extension

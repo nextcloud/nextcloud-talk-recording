@@ -24,14 +24,14 @@ Module to start and stop the recording for a specific call.
 
 import logging
 import os
-import pulsectl
 import subprocess
 from datetime import datetime
-from pyvirtualdisplay import Display
 from secrets import token_urlsafe
 from threading import Event, Thread
 
-from nextcloud.talk.recording import RECORDING_STATUS_AUDIO_AND_VIDEO, RECORDING_STATUS_AUDIO_ONLY
+import pulsectl
+from pyvirtualdisplay import Display
+
 from . import BackendNotifier
 from .Config import config
 from .Participant import Participant
@@ -228,6 +228,7 @@ class Service:
             self._fileName = recorderArguments[-1]
 
             self._logger.debug("Starting recorder")
+            # pylint: disable=consider-using-with
             self._process = subprocess.Popen(recorderArguments, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 
             # Log recorder output.
@@ -246,7 +247,7 @@ class Service:
             # without an expected reason.
             if returnCode != 255:
                 raise Exception("recorder ended unexpectedly")
-        except Exception as exception:
+        except Exception:
             self._stopHelpers()
 
             if self._stopped.is_set() and not self._started.is_set():
@@ -285,12 +286,12 @@ class Service:
         BackendNotifier.stopped(self.backend, self.token, actorType, actorId)
 
         if not self._fileName:
-            self._logger.error(f"Recording stopping before starting, nothing to upload")
+            self._logger.error("Recording stopping before starting, nothing to upload")
 
             return
 
         if not os.path.exists(self._fileName):
-            self._logger.error(f"Recording can not be uploaded, {self._fileName} does not exist")
+            self._logger.error("Recording can not be uploaded, %s does not exist", self._fileName)
 
             return
 

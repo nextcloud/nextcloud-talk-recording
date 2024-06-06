@@ -27,13 +27,12 @@ import hmac
 import json
 import logging
 import os
-import requests
-import ssl
-from nextcloud.talk import recording
-from requests import Request, Session
-from requests_toolbelt import MultipartEncoder
 from secrets import token_urlsafe
 
+from requests import Request, Session
+from requests_toolbelt import MultipartEncoder
+
+from nextcloud.talk import recording
 from .Config import config
 
 logger = logging.getLogger(__name__)
@@ -61,8 +60,6 @@ def doRequest(backend, request, retries=3):
     :param request: the request to send.
     :param retries: the number of times to retry in case of failure.
     """
-    context = None
-
     backendSkipVerify = config.getBackendSkipVerify(backend)
 
     try:
@@ -70,12 +67,12 @@ def doRequest(backend, request, retries=3):
         preparedRequest = session.prepare_request(request)
         response = session.send(preparedRequest, verify=not backendSkipVerify)
         response.raise_for_status()
-    except Exception as exception:
+    except Exception:
         if retries > 1:
-            logger.exception(f"Failed to send message to backend, {retries} retries left!")
+            logger.exception("Failed to send message to backend, %d retries left!", retries)
             doRequest(backend, request, retries - 1)
         else:
-            logger.exception(f"Failed to send message to backend, giving up!")
+            logger.exception("Failed to send message to backend, giving up!")
             raise
 
 def backendRequest(backend, data):
@@ -103,9 +100,9 @@ def backendRequest(backend, data):
         'User-Agent': recording.USER_AGENT,
     }
 
-    backendRequest = Request('POST', url, headers, data=data)
+    request = Request('POST', url, headers, data=data)
 
-    doRequest(backend, backendRequest)
+    doRequest(backend, request)
 
 def started(backend, token, status, actorType, actorId):
     """
@@ -150,7 +147,7 @@ def stopped(backend, token, actorType, actorId):
         },
     }
 
-    if actorType != None and actorId != None:
+    if actorType is not None and actorId is not None:
         data['stopped']['actor'] = {
             'type': actorType,
             'id': actorId,
@@ -187,7 +184,7 @@ def uploadRecording(backend, token, fileName, owner):
     :param owner: the owner of the uploaded file.
     """
 
-    logger.info(f"Upload recording {fileName} to {backend} in {token} as {owner}")
+    logger.info("Upload recording %s to %s in %s as %s", fileName, backend, token, owner)
 
     url = backend.rstrip('/') + '/ocs/v2.php/apps/spreed/api/v1/recording/' + token + '/store'
 
@@ -195,6 +192,7 @@ def uploadRecording(backend, token, fileName, owner):
     # calculate the checksum is empty.
     data = {
         'owner': owner,
+        # pylint: disable=consider-using-with
         'file': (os.path.basename(fileName), open(fileName, 'rb')),
     }
 

@@ -23,6 +23,11 @@ dynamic = ["version"]
 requires = ["setuptools >= 69.3"]
 build-backend = "setuptools.build_meta"
 
+[project.optional-dependencies]
+dev = [
+    "pylint>=2.9",
+]
+
 [project.urls]
 repository = "https://github.com/nextcloud/nextcloud-talk-recording"
 
@@ -32,3 +37,26 @@ nextcloud-talk-recording-benchmark = "nextcloud.talk.recording.Benchmark:main"
 
 [tool.setuptools.dynamic]
 version = {attr = "nextcloud.talk.recording.__version__"}
+
+[tool.pylint.basic]
+argument-naming-style = 'camelCase'
+attr-naming-style = 'camelCase'
+function-naming-style = 'camelCase'
+method-naming-style = 'camelCase'
+module-naming-style = 'PascalCase'
+variable-naming-style = 'camelCase'
+
+ignore-paths = 'packaging/*'
+
+disable = [
+    "line-too-long",
+    "too-few-public-methods",
+    "too-many-arguments",
+    "too-many-instance-attributes",
+    "too-many-locals",
+    "too-many-statements",
+    # FIXME: these messages should be fixed rather than disabled
+    "bare-except",
+    "broad-exception-caught",
+    "broad-exception-raised",
+]

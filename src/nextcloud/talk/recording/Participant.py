@@ -25,24 +25,20 @@ Module to join a call with a browser.
 import hashlib
 import hmac
 import json
-import logging
 import re
 import threading
-import websocket
-
 from datetime import datetime
 from secrets import token_urlsafe
-from selenium import webdriver
-from selenium.webdriver.common.by import By
+from shutil import disk_usage
+from time import sleep
+
+import websocket
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.webdriver import WebDriver as ChromeDriver
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.firefox.webdriver import WebDriver as FirefoxDriver
-from selenium.webdriver.support.wait import WebDriverWait
-from shutil import disk_usage
-from time import sleep
 
 from .Config import config
 
@@ -79,13 +75,15 @@ class BiDiLogsHelper:
         }))
 
         self.initialLogsLock = threading.Lock()
+        # pylint: disable=consider-using-with
         self.initialLogsLock.acquire()
 
-        self.loggingThread = threading.Thread(target=self.__processLogEvents, daemon=True)
+        self.loggingThread = threading.Thread(target=self._processLogEvents, daemon=True)
         self.loggingThread.start()
 
         # Do not return until the existing logs were fetched, except if it is
         # taking too long.
+        # pylint: disable=consider-using-with
         self.initialLogsLock.acquire(timeout=10)
 
     def __del__(self):
@@ -95,43 +93,43 @@ class BiDiLogsHelper:
         if self.loggingThread:
             self.loggingThread.join()
 
-    def __messageFromEvent(self, event):
-            if not 'params' in event:
-                return '???'
+    def _messageFromEvent(self, event):
+        if not 'params' in event:
+            return '???'
 
-            method = ''
-            if 'method' in event['params']:
-                method = event['params']['method']
-            elif 'level' in event['params']:
-                method = event['params']['level'] if event['params']['level'] != 'warning' else 'warn'
+        method = ''
+        if 'method' in event['params']:
+            method = event['params']['method']
+        elif 'level' in event['params']:
+            method = event['params']['level'] if event['params']['level'] != 'warning' else 'warn'
 
-            text = ''
-            if 'text' in event['params']:
-                text = event['params']['text']
+        text = ''
+        if 'text' in event['params']:
+            text = event['params']['text']
 
-            time = '??:??:??'
-            if 'timestamp' in event['params']:
-                timestamp = event['params']['timestamp']
+        time = '??:??:??'
+        if 'timestamp' in event['params']:
+            timestamp = event['params']['timestamp']
 
-                # JavaScript timestamps are millisecond based, Python timestamps
-                # are second based.
-                time = datetime.fromtimestamp(timestamp / 1000).strftime('%H:%M:%S')
+            # JavaScript timestamps are millisecond based, Python timestamps
+            # are second based.
+            time = datetime.fromtimestamp(timestamp / 1000).strftime('%H:%M:%S')
 
-            methodShort = '?'
-            if method == 'error':
-                methodShort = 'E'
-            elif method == 'warn':
-                methodShort = 'W'
-            elif method == 'log':
-                methodShort = 'L'
-            elif method == 'info':
-                methodShort = 'I'
-            elif method == 'debug':
-                methodShort = 'D'
+        methodShort = '?'
+        if method == 'error':
+            methodShort = 'E'
+        elif method == 'warn':
+            methodShort = 'W'
+        elif method == 'log':
+            methodShort = 'L'
+        elif method == 'info':
+            methodShort = 'I'
+        elif method == 'debug':
+            methodShort = 'D'
 
-            return time + ' ' + methodShort + ' ' + text
+        return time + ' ' + methodShort + ' ' + text
 
-    def __processLogEvents(self):
+    def _processLogEvents(self):
         while True:
             try:
                 event = json.loads(self.websocket.recv())
@@ -146,7 +144,7 @@ class BiDiLogsHelper:
             if not 'method' in event or event['method'] != 'log.entryAdded':
                 continue
 
-            message = self.__messageFromEvent(event)
+            message = self._messageFromEvent(event)
 
             with self.logsLock:
                 if self.realtimeLogsEnabled:
@@ -422,7 +420,7 @@ class SeleniumHelper:
 
         # Add an explicit return point at the end of the script if none is
         # given.
-        if re.search('returnResolve\(.*\)', script) == None:
+        if re.search('returnResolve\\(.*\\)', script) is None:
             script += '; returnResolve()'
 
         # await is not valid in the root context in Firefox, so the script to be
@@ -498,7 +496,7 @@ class Participant():
         self.seleniumHelper.driver.get(self.nextcloudUrl + '/index.php/call/' + token + '/recording')
 
         secret = config.getBackendSecret(self.nextcloudUrl)
-        if secret == None:
+        if secret is None:
             raise Exception(f"No configured backend secret for {self.nextcloudUrl}")
 
         random = token_urlsafe(64)
@@ -515,7 +513,7 @@ class Participant():
         ''')
 
         secret = config.getSignalingSecret(settings['server'])
-        if secret == None:
+        if secret is None:
             raise Exception(f"No configured signaling secret for {settings['server']}")
 
         random = token_urlsafe(64)

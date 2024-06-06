@@ -17,6 +17,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+# Disable message for the module but enable it again for the rest of the file.
+# pylint: disable=invalid-name
+# pylint: enable=invalid-name
+
+"""
+Module to provide the command line interface for the recorder.
+"""
+
 import argparse
 import logging
 
@@ -25,6 +33,9 @@ from .Config import config
 from .Server import app
 
 def main():
+    """
+    Runs the recorder with the arguments given in the command line.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config", help="path to configuration file", default="server.conf")
     parser.add_argument("-v", "--version", help="show version and quit", action="store_true")

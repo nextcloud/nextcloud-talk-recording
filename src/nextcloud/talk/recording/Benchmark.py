@@ -17,6 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""
+Module to provide the command line interface for the benchmark.
+"""
+
 import argparse
 import atexit
 import logging
@@ -31,7 +35,6 @@ from pyvirtualdisplay import Display
 
 from nextcloud.talk.recording import RECORDING_STATUS_AUDIO_AND_VIDEO, RECORDING_STATUS_AUDIO_ONLY
 from .Config import Config
-from .Participant import SeleniumHelper
 from .RecorderArgumentsBuilder import RecorderArgumentsBuilder
 from .Service import newAudioSink, processLog
 
@@ -52,8 +55,14 @@ class ResourcesTracker:
         self.memoryPercents = []
 
     def start(self, pid, length, stopResourcesTrackerThread):
-        self._thread = Thread(target=self._track, args=[pid, length, stopResourcesTrackerThread], daemon=True)
-        self._thread.start()
+        """
+        Starts tracking the resources used by the given PID.
+
+        The tracker will automatically end after the given length in seconds.
+        The tracker can be aborted earlier by setting the given
+        stopResourcesTrackerThread event.
+        """
+        Thread(target=self._track, args=[pid, length, stopResourcesTrackerThread], daemon=True).start()
 
     def _track(self, pid, length, stopResourcesTrackerThread):
         # Wait a little for the values to stabilize.
@@ -79,15 +88,15 @@ class ResourcesTracker:
             self.logger.info(count)
 
             cpuPercent = process.cpu_percent()
-            self.logger.info(f"CPU percent: {cpuPercent}")
+            self.logger.info("CPU percent: %f", cpuPercent)
             self.cpuPercents.append(cpuPercent)
 
             memoryInfo = process.memory_info()
-            self.logger.info(f"Memory info: {memoryInfo}")
+            self.logger.info("Memory info: %f", memoryInfo)
             self.memoryInfos.append(memoryInfo)
 
             memoryPercent = process.memory_percent()
-            self.logger.info(f"Memory percent: {memoryPercent}")
+            self.logger.info("Memory percent: %f", memoryPercent)
             self.memoryPercents.append(memoryPercent)
 
         process.terminate()
@@ -111,6 +120,8 @@ class BenchmarkService:
     def __init__(self):
         self._logger = logging.getLogger()
 
+        self._resourcesTracker = ResourcesTracker()
+
         self._display = None
         self._audioModuleIndex = None
         self._playerProcess = None
@@ -125,6 +136,13 @@ class BenchmarkService:
         self._stopHelpers()
 
     def run(self, args):
+        """
+        Runs the benchmark.
+
+        This method blocks until the recording ends.
+
+        :param args: the parsed arguments given in the command line.
+        """
         directory = os.path.dirname(args.output)
 
         stopResourcesTrackerThread = Event()
@@ -154,6 +172,7 @@ class BenchmarkService:
 
             self._logger.debug("Playing video")
             playerArgs = ["ffplay", "-x", str(args.width), "-y", str(args.height), args.input]
+            # pylint: disable=consider-using-with
             self._playerProcess = subprocess.Popen(playerArgs, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=env)
 
             # Log player output.
@@ -170,15 +189,15 @@ class BenchmarkService:
             recorderArgumentsBuilder.setExtension(f".{extension}")
             self._recorderArguments = recorderArgumentsBuilder.getRecorderArguments(status, self._display.new_display_var, audioSourceIndex, args.width, args.height, extensionlessFileName)
 
-            self._fileName = self._recorderArguments[-1]
+            fileName = self._recorderArguments[-1]
 
-            if os.path.exists(self._fileName):
+            if os.path.exists(fileName):
                 raise Exception("File exists")
 
             self._logger.debug("Starting recorder")
+            # pylint: disable=consider-using-with
             self._recorderProcess = subprocess.Popen(self._recorderArguments, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 
-            self._resourcesTracker = ResourcesTracker()
             self._resourcesTracker.start(self._recorderProcess.pid, args.length, stopResourcesTrackerThread)
 
             # Log recorder output.
@@ -218,15 +237,37 @@ class BenchmarkService:
             self._averageMemoryPercents /= len(self._resourcesTracker.memoryPercents)
 
     def getRecorderArguments(self):
+        """
+        Returns the arguments used to start the recorder process.
+        """
         return self._recorderArguments
 
     def getAverageCpuPercents(self):
+        """
+        Returns the average CPU percent used by the recorder process.
+
+        The value is available only once the recorder process has finished.
+        """
         return self._averageCpuPercents
 
     def getAverageMemoryInfos(self):
+        """
+        Returns the average memory values used by the recorder process.
+
+        The returned value is a dictionary with "rss" ("Resident set size", the
+        RAM memory currently used by the process) and "vms" ("Virtual memory
+        size", the maximum memory that could be used by the process) keys.
+
+        The values are available only once the recorder process has finished.
+        """
         return self._averageMemoryInfos
 
     def getAverageMemoryPercents(self):
+        """
+        Returns the average memory percent used by the recorder process.
+
+        The value is available only once the recorder process has finished.
+        """
         return self._averageMemoryPercents
 
     def _stopHelpers(self):
@@ -250,6 +291,7 @@ class BenchmarkService:
             finally:
                 self._playerProcess = None
 
+        # pylint: disable=duplicate-code
         if self._audioModuleIndex:
             self._logger.debug("Unloading audio module")
             try:
@@ -269,9 +311,13 @@ class BenchmarkService:
             finally:
                 self._display = None
 
+# pylint: disable=invalid-name
 benchmarkService = None
 
 def main():
+    """
+    Runs the benchmark with the arguments given in the command line.
+    """
     defaultConfig = Config()
 
     parser = argparse.ArgumentParser()
@@ -293,6 +339,7 @@ def main():
     if args.verbose_extra:
         logging.basicConfig(level=logging.DEBUG)
 
+    # pylint: disable=global-statement
     global benchmarkService
     benchmarkService = BenchmarkService()
     benchmarkService.run(args)
@@ -305,6 +352,7 @@ def main():
     print(f"Average memory percents: {benchmarkService.getAverageMemoryPercents()}")
 
 def _stopServiceOnExit():
+    # pylint: disable=global-statement
     global benchmarkService
     if benchmarkService:
         del benchmarkService
