@@ -19,6 +19,8 @@
 
 # pylint: disable=missing-docstring
 
+from ipaddress import ip_network
+
 import pytest
 
 from nextcloud.talk.recording.Config import Config
@@ -38,6 +40,38 @@ class ConfigTest:
         monkeypatch.setattr(config._configParser, 'read', mockRead)
 
         return config
+
+    def testGetTrustedProxies(self, configLoadedFromString):
+        configLoadedFromString.configString = """
+[app]
+trustedproxies = 127.0.0.1, 2001:db8::0, not-an-ip, 192.168.0.0/16, 2001:db8::1234:0/112
+"""
+        configLoadedFromString.load('fake-file-name')
+
+        assert configLoadedFromString.getTrustedProxies() == [
+            ip_network('127.0.0.1'),
+            ip_network('2001:db8::0'),
+            ip_network('192.168.0.0/16'),
+            ip_network('2001:db8::1234:0/112')
+        ]
+
+    def testGetTrustedProxiesWhenCommented(self, configLoadedFromString):
+        configLoadedFromString.configString = """
+[app]
+#trustedproxies =
+"""
+        configLoadedFromString.load('fake-file-name')
+
+        assert configLoadedFromString.getTrustedProxies() == []
+
+    def testGetTrustedProxiesWhenEmpty(self, configLoadedFromString):
+        configLoadedFromString.configString = """
+[app]
+trustedproxies =
+"""
+        configLoadedFromString.load('fake-file-name')
+
+        assert configLoadedFromString.getTrustedProxies() == []
 
     def testGetBackendValuesWhenNotSet(self, configLoadedFromString):
         configLoadedFromString.configString = """
