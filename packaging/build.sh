@@ -181,6 +181,10 @@ if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-ubuntu22.04$")" ]
 fi
 
 # Start existing containers if they are stopped.
+if [ -n "$(docker ps --all --quiet --filter status=exited --filter name="^/$CONTAINER-debian11$")" ]; then
+	echo "Starting Talk recording packages builder container for Debian 11"
+	docker start $CONTAINER-debian11
+fi
 if [ -n "$(docker ps --all --quiet --filter status=exited --filter name="^/$CONTAINER-ubuntu20.04$")" ]; then
 	echo "Starting Talk recording packages builder container for Ubuntu 20.04"
 	docker start $CONTAINER-ubuntu20.04
