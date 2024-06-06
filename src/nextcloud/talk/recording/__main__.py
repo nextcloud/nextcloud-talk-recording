@@ -17,6 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+# Disable message for the module but enable it again for the rest of the file.
+# pylint: disable=invalid-name
+# pylint: enable=invalid-name
+
 """
 Module to provide the command line interface for the recorder.
 """

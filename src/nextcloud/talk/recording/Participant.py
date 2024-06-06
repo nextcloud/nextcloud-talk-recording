@@ -75,6 +75,7 @@ class BiDiLogsHelper:
         }))
 
         self.initialLogsLock = threading.Lock()
+        # pylint: disable=consider-using-with
         self.initialLogsLock.acquire()
 
         self.loggingThread = threading.Thread(target=self._processLogEvents, daemon=True)
@@ -82,6 +83,7 @@ class BiDiLogsHelper:
 
         # Do not return until the existing logs were fetched, except if it is
         # taking too long.
+        # pylint: disable=consider-using-with
         self.initialLogsLock.acquire(timeout=10)
 
     def __del__(self):

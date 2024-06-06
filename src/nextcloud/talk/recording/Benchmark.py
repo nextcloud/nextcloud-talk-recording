@@ -172,6 +172,7 @@ class BenchmarkService:
 
             self._logger.debug("Playing video")
             playerArgs = ["ffplay", "-x", str(args.width), "-y", str(args.height), args.input]
+            # pylint: disable=consider-using-with
             self._playerProcess = subprocess.Popen(playerArgs, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=env)
 
             # Log player output.
@@ -194,6 +195,7 @@ class BenchmarkService:
                 raise Exception("File exists")
 
             self._logger.debug("Starting recorder")
+            # pylint: disable=consider-using-with
             self._recorderProcess = subprocess.Popen(self._recorderArguments, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 
             self._resourcesTracker.start(self._recorderProcess.pid, args.length, stopResourcesTrackerThread)
@@ -289,6 +291,7 @@ class BenchmarkService:
             finally:
                 self._playerProcess = None
 
+        # pylint: disable=duplicate-code
         if self._audioModuleIndex:
             self._logger.debug("Unloading audio module")
             try:
@@ -308,6 +311,7 @@ class BenchmarkService:
             finally:
                 self._display = None
 
+# pylint: disable=invalid-name
 benchmarkService = None
 
 def main():
@@ -335,6 +339,7 @@ def main():
     if args.verbose_extra:
         logging.basicConfig(level=logging.DEBUG)
 
+    # pylint: disable=global-statement
     global benchmarkService
     benchmarkService = BenchmarkService()
     benchmarkService.run(args)
@@ -347,6 +352,7 @@ def main():
     print(f"Average memory percents: {benchmarkService.getAverageMemoryPercents()}")
 
 def _stopServiceOnExit():
+    # pylint: disable=global-statement
     global benchmarkService
     if benchmarkService:
         del benchmarkService

@@ -192,6 +192,7 @@ def uploadRecording(backend, token, fileName, owner):
     # calculate the checksum is empty.
     data = {
         'owner': owner,
+        # pylint: disable=consider-using-with
         'file': (os.path.basename(fileName), open(fileName, 'rb')),
     }
 

@@ -228,6 +228,7 @@ class Service:
             self._fileName = recorderArguments[-1]
 
             self._logger.debug("Starting recorder")
+            # pylint: disable=consider-using-with
             self._process = subprocess.Popen(recorderArguments, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 
             # Log recorder output.
