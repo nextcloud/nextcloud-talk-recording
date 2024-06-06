@@ -173,8 +173,13 @@ if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-ubuntu22.04$")" ]
 	echo "Installing required build dependencies"
 	# "noninteractive" is used to provide default settings instead of asking for
 	# them (for example, for tzdata).
+	# Due to a bug in python3-build in Ubuntu 22.04 python3-virtualenv needs to
+	# be used instead of python3-venv:
+	# https://bugs.launchpad.net/ubuntu/+source/python-build/+bug/1992108
+	# Even with virtualenv there is no proper virtual environment, so the build
+	# dependencies specified in pyproject.toml need to be installed system wide.
 	docker exec $CONTAINER-ubuntu22.04 bash -c "apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install --assume-yes make python3 python3-pip python3-virtualenv python3-build python3-stdeb python3-all debhelper dh-python git dh-exec"
-	docker exec $CONTAINER-ubuntu22.04 bash -c "python3 -m pip install 'setuptools >= 61.0'"
+	docker exec $CONTAINER-ubuntu22.04 bash -c "python3 -m pip install 'setuptools >= 69.3'"
 	# Some packages need to be installed so the unit tests can be run in the
 	# packages being built.
 	docker exec $CONTAINER-ubuntu22.04 bash -c "apt-get install --assume-yes pulseaudio python3-async-generator python3-trio python3-wsproto"

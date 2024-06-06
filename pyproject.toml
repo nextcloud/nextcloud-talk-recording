@@ -19,6 +19,10 @@ dependencies = [
 ]
 dynamic = ["version"]
 
+[build-system]
+requires = ["setuptools >= 69.3"]
+build-backend = "setuptools.build_meta"
+
 [project.urls]
 repository = "https://github.com/nextcloud/nextcloud-talk-recording"
 
