@@ -31,12 +31,19 @@ from ipaddress import ip_address
 from threading import Lock, Thread
 
 from flask import Flask, jsonify, request
+from prometheus_client import Counter, Gauge, make_wsgi_app
 from werkzeug.exceptions import BadRequest, Forbidden, NotFound
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
 from nextcloud.talk import recording
 from nextcloud.talk.recording import RECORDING_STATUS_AUDIO_AND_VIDEO
 from .Config import config
 from .Service import Service
+
+# prometheus_client removes "_total" from the counter name, so "_current" needs
+# to be added to the gauge to prevent a duplicated name.
+metricsRecordingsCurrent = Gauge('recording_recordings_current', 'The current number of recordings', ['backend'])
+metricsRecordingsTotal = Counter('recording_recordings_total', 'The total number of recordings', ['backend'])
 
 def isAddressInNetworks(address, networks):
     """
@@ -164,8 +171,39 @@ class TrustedProxiesFix:
 
         return address
 
+class ProtectedMetrics:
+    """
+    Middleware to serve the metrics only if the remote address is allowed to
+    access them.
+    """
+
+    # pylint: disable=redefined-outer-name
+    def __init__(self, config):
+        self.config = config
+        self.metrics = make_wsgi_app()
+
+    def __call__(self, environment, startResponse):
+        """
+        Returns the metrics if the remote address is allowed to access them, or
+        an error 403 if not.
+        """
+
+        remoteAddress = environment['REMOTE_ADDR']
+        remoteAddress = ip_address(remoteAddress)
+
+        if not isAddressInNetworks(remoteAddress, config.getStatsAllowedIps()):
+            startResponse('403 FORBIDDEN', [])
+
+            return []
+
+        return self.metrics(environment, startResponse)
+
 app = Flask(__name__)
 app.wsgi_app = TrustedProxiesFix(app.wsgi_app, config)
+
+app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {
+    '/metrics': TrustedProxiesFix(ProtectedMetrics(config), config)
+})
 
 services = {}
 servicesStopping = {}
@@ -334,6 +372,9 @@ def _startRecordingService(service, actorType, actorId):
     """
     serviceId = f'{service.backend}-{service.token}'
 
+    metricsRecordingsCurrent.labels(service.backend).inc()
+    metricsRecordingsTotal.labels(service.backend).inc()
+
     try:
         service.start(actorType, actorId)
     except Exception as exception:
@@ -348,6 +389,9 @@ def _startRecordingService(service, actorType, actorId):
             app.logger.exception("Failed to start recording: %s %s", service.backend, service.token)
 
             services.pop(serviceId)
+
+            metricsRecordingsCurrent.labels(service.backend).dec()
+
 
 def stopRecording(backend, token, data):
     """
@@ -428,6 +472,8 @@ def _stopRecordingService(service, actorType, actorId):
                 app.logger.error("Recording stopped when not in the list of stopping services: %s %s", service.backend, service.token)
             else:
                 servicesStopping.pop(serviceId)
+
+            metricsRecordingsCurrent.labels(service.backend).dec()
 
 # Despite this handler it seems that in some cases the geckodriver could have
 # been killed already when it is executed, which unfortunately prevents a proper

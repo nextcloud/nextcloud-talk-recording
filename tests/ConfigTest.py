@@ -368,3 +368,37 @@ internalsecret = the-internal-secret2
 
         signalingUrl = 'https://signaling.server2.com'
         assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret2'
+
+    def testGetStatsAllowedIps(self, configLoadedFromString):
+        configLoadedFromString.configString = """
+[stats]
+allowed_ips = 127.0.0.1, 2001:db8::0, not-an-ip, 192.168.0.0/16, 2001:db8::1234:0/112
+"""
+        configLoadedFromString.load('fake-file-name')
+
+        assert configLoadedFromString.getStatsAllowedIps() == [
+            ip_network('127.0.0.1'),
+            ip_network('2001:db8::0'),
+            ip_network('192.168.0.0/16'),
+            ip_network('2001:db8::1234:0/112')
+        ]
+
+    def testGetStatsAllowedIpsWhenCommented(self, configLoadedFromString):
+        configLoadedFromString.configString = """
+[stats]
+#allowed_ips =
+"""
+        configLoadedFromString.load('fake-file-name')
+
+        assert configLoadedFromString.getStatsAllowedIps() == [
+            ip_network('127.0.0.1')
+        ]
+
+    def testGetStatsAllowedIpsWhenEmpty(self, configLoadedFromString):
+        configLoadedFromString.configString = """
+[stats]
+allowed_ips =
+"""
+        configLoadedFromString.load('fake-file-name')
+
+        assert configLoadedFromString.getStatsAllowedIps() == []
