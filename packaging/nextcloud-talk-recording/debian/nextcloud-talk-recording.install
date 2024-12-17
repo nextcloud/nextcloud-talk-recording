@@ -1,2 +1,6 @@
 #!/usr/bin/dh-exec
+#
+# SPDX-FileCopyrightText: 2023 Nextcloud GmbH and Nextcloud contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
 server.conf.in => /etc/nextcloud-talk-recording/server.conf

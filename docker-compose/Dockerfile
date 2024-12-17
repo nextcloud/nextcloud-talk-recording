@@ -1,5 +1,8 @@
 FROM ubuntu:20.04
 
+# SPDX-FileCopyrightText: 2023 Nextcloud GmbH and Nextcloud contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get --assume-yes update

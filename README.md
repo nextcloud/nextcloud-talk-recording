@@ -1,3 +1,7 @@
+<!--
+  - SPDX-FileCopyrightText: 2023 Nextcloud GmbH and Nextcloud contributors
+  - SPDX-License-Identifier: AGPL-3.0-or-later
+-->
 # Nextcloud Talk Recording Server
 
 This is the official recording server to be used with Nextcloud Talk (https://github.com/nextcloud/spreed).
