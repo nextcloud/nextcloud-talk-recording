@@ -4,6 +4,8 @@
 -->
 # Nextcloud Talk Recording Server
 
+[![REUSE status](https://api.reuse.software/badge/github.com/nextcloud/nextcloud-talk-recording)](https://api.reuse.software/info/github.com/nextcloud/nextcloud-talk-recording)
+
 This is the official recording server to be used with Nextcloud Talk (https://github.com/nextcloud/spreed).
 
 It requires the standalone signaling server for Nextcloud Talk (https://github.com/strukturag/nextcloud-spreed-signaling).
