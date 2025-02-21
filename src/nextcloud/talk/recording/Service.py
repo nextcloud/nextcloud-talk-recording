@@ -189,8 +189,11 @@ class Service:
 
             browser = config.getBrowserForRecording()
 
+            driverPath = config.getDriverPathForRecording()
+            browserPath = config.getBrowserPathForRecording()
+
             self._logger.debug("Starting participant")
-            self._participant = Participant(browser, self.backend, width, height, env, self._logger)
+            self._participant = Participant(browser, self.backend, width, height, env, driverPath, browserPath, self._logger)
 
             self._logger.debug("Joining call")
             self._participant.joinCall(self.token)

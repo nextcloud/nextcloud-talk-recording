@@ -193,7 +193,7 @@ class SeleniumHelper:
             # created in "/tmp".
             self.driver.quit()
 
-    def startChrome(self, width, height, env):
+    def startChrome(self, width, height, env, driverPath, browserPath):
         """
         Starts a Chrome instance.
 
@@ -203,6 +203,9 @@ class SeleniumHelper:
         :param height: the height of the browser window.
         :param env: the environment variables, including the display to start
                     the browser in.
+        :param driverPath: the path to override the default chromedriver.
+        :param browserPath: the path to override the default Google Chrome or
+                            Chromium executable.
         """
 
         options = ChromeOptions()
@@ -231,7 +234,11 @@ class SeleniumHelper:
 
         service = ChromeService(
             env=env,
+            executable_path=driverPath,
         )
+
+        if browserPath:
+            options.binary_location = browserPath
 
         self.driver = ChromeDriver(
             options=options,
@@ -240,7 +247,7 @@ class SeleniumHelper:
 
         self.bidiLogsHelper = BiDiLogsHelper(self.driver, self._parentLogger)
 
-    def startFirefox(self, width, height, env):
+    def startFirefox(self, width, height, env, driverPath, browserPath):
         """
         Starts a Firefox instance.
 
@@ -248,6 +255,8 @@ class SeleniumHelper:
         :param height: the height of the browser window.
         :param env: the environment variables, including the display to start
                     the browser in.
+        :param driverPath: the path to override the default geckodriver.
+        :param browserPath: the path to override the default Firefox executable.
         """
 
         options = FirefoxOptions()
@@ -277,7 +286,11 @@ class SeleniumHelper:
 
         service = FirefoxService(
             env=env,
+            executable_path=driverPath,
         )
+
+        if browserPath:
+            options.binary_location = browserPath
 
         self.driver = FirefoxDriver(
             options=options,
@@ -437,7 +450,7 @@ class Participant():
     This wrapper exposes functions to use a real participant in a browser.
     """
 
-    def __init__(self, browser, nextcloudUrl, width, height, env, parentLogger):
+    def __init__(self, browser, nextcloudUrl, width, height, env, driverPath, browserPath, parentLogger):
         """
         Starts a real participant in the given Nextcloud URL using the given
         browser.
@@ -449,6 +462,8 @@ class Participant():
         :param height: the height of the browser window.
         :param env: the environment variables, including the display to start
                     the browser in.
+        :param driverPath: the path to override the default Selenium driver.
+        :param browserPath: the path to override the default browser executable.
         :param parentLogger: the parent logger to get a child from.
         """
 
@@ -461,9 +476,9 @@ class Participant():
         self.seleniumHelper = SeleniumHelper(parentLogger, acceptInsecureCerts)
 
         if browser == 'chrome':
-            self.seleniumHelper.startChrome(width, height, env)
+            self.seleniumHelper.startChrome(width, height, env, driverPath, browserPath)
         elif browser == 'firefox':
-            self.seleniumHelper.startFirefox(width, height, env)
+            self.seleniumHelper.startFirefox(width, height, env, driverPath, browserPath)
         else:
             raise Exception('Invalid browser: ' + browser)
 
