@@ -1,6 +1,7 @@
 #
 # @copyright Copyright (c) 2023, Daniel Calviño Sánchez (danxuliu@gmail.com)
 # @copyright Copyright (c) 2023, Elmer Miroslav Mosher Golovin (miroslav@mishamosher.com)
+# @copyright Copyright (c) 2025, Cedric Bös (cedric.boes@online.de)
 #
 # @license GNU AGPL version 3 or any later version
 #
@@ -324,6 +325,24 @@ class Config:
         Defaults to "firefox".
         """
         return self._configParser.get('recording', 'browser', fallback='firefox')
+
+    def getDriverPathForRecording(self):
+        """
+        Returns the path to overwrite the Selenium driver that will be used for
+        recordings.
+
+        Defaults to None.
+        """
+        return self._configParser.get('recording', 'driverPath', fallback= None)
+
+    def getBrowserPathForRecording(self):
+        """
+        Returns the path to overwrite the browser executable that will be used
+        for recordings.
+
+        Defaults to None.
+        """
+        return self._configParser.get('recording', 'browserPath', fallback=None)
 
     def getStatsAllowedIps(self):
         """

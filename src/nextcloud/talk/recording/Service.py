@@ -1,6 +1,7 @@
 #
 # @copyright Copyright (c) 2023, Daniel Calviño Sánchez (danxuliu@gmail.com)
 # @copyright Copyright (c) 2023, Elmer Miroslav Mosher Golovin (miroslav@mishamosher.com)
+# @copyright Copyright (c) 2025, Cedric Bös (cedric.boes@online.de)
 #
 # @license GNU AGPL version 3 or any later version
 #
@@ -204,8 +205,11 @@ class Service:
 
             browser = config.getBrowserForRecording()
 
+            driverPath = config.getDriverPathForRecording()
+            browserPath = config.getBrowserPathForRecording()
+
             self._logger.debug("Starting participant")
-            self._participant = Participant(browser, self.backend, width, height, env, self._logger)
+            self._participant = Participant(browser, self.backend, width, height, env, driverPath, browserPath, self._logger)
 
             self._logger.debug("Joining call")
             self._participant.joinCall(self.token)
