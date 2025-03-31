@@ -1,0 +1,18 @@
+# SPDX-FileCopyrightText: 2024 Nextcloud GmbH and Nextcloud contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+version = 1
+SPDX-PackageName = "nextcloud-talk-recording"
+SPDX-PackageSupplier = "Nextcloud <info@nextcloud.com>"
+SPDX-PackageDownloadLocation = "https://github.com/nextcloud/nextcloud-talk-recording"
+
+[[annotations]]
+path = ["packaging/selenium/debian/py3dist-overrides", "packaging/selenium/MANIFEST.in"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023 SeleniumHQ and contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ["packaging/nextcloud-talk-recording/debian/py3dist-overrides", "packaging/nextcloud-talk-recording/MANIFEST.in"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023 Nextcloud GmbH and Nextcloud contributors"
+SPDX-License-Identifier = "AGPL-3.0-or-later"

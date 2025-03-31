@@ -1,4 +1,10 @@
+<!--
+  - SPDX-FileCopyrightText: 2023 Nextcloud GmbH and Nextcloud contributors
+  - SPDX-License-Identifier: AGPL-3.0-or-later
+-->
 # Nextcloud Talk Recording Server
+
+[![REUSE status](https://api.reuse.software/badge/github.com/nextcloud/nextcloud-talk-recording)](https://api.reuse.software/info/github.com/nextcloud/nextcloud-talk-recording)
 
 This is the official recording server to be used with Nextcloud Talk (https://github.com/nextcloud/spreed).
 

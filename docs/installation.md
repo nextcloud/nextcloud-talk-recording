@@ -1,3 +1,7 @@
+<!--
+  - SPDX-FileCopyrightText: 2023 Nextcloud GmbH and Nextcloud contributors
+  - SPDX-License-Identifier: AGPL-3.0-or-later
+-->
 # Installation
 
 The recording server requires an HPB (High Performance Backend for Talk) to be setup. However, it is recommended to setup the recording server in a different machine than the HPB to prevent their load to interfere with each other. Moreover, as the recording server requires some dependencies that are not typically found in server machines, like Firefox, it is recommended to use its own "isolated" machine (either a real machine or a virtual machine). A container would also work, although it might require a special configuration to start the server when the container is started.
