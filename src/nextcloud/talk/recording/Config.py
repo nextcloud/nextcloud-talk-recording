@@ -310,6 +310,24 @@ class Config:
         """
         return self._configParser.get('recording', 'browser', fallback='firefox')
 
+    def getDriverPathForRecording(self):
+        """
+        Returns the path to override the Selenium driver that will be used for
+        recordings.
+
+        Defaults to None.
+        """
+        return self._configParser.get('recording', 'driverPath', fallback=None)
+
+    def getBrowserPathForRecording(self):
+        """
+        Returns the path to override the browser executable that will be used
+        for recordings.
+
+        Defaults to None.
+        """
+        return self._configParser.get('recording', 'browserPath', fallback=None)
+
     def getStatsAllowedIps(self):
         """
         Returns the list of IPs allowed to query the stats.

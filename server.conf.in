@@ -129,6 +129,27 @@
 # Defaults to firefox
 # browser = firefox
 
+# Path to the Selenium driver to use for recordings.
+# If set the driver must match the browser being used (for example,
+# "/usr/bin/geckodriver" for "firefox"). If no driver is explicitly set Selenium
+# Manager will try to find the right one in $PATH, downloading it as a fallback.
+# Note that Selenium Manager does not work in some architectures (for example,
+# Linux on arm64/aarch64), so in those architectures the driver must be
+# explicitly set.
+#driverPath =
+
+# Path to the browser executable to use for recordings.
+# If set the executable must match the browser being used (for example,
+# "/usr/bin/firefox-esr" for "firefox"). If no executable is explicitly set
+# Selenium Manager will try to find the right one in $PATH. Depending on the
+# installed Selenium version if the executable is not found Selenium Manager may
+# also download the browser as a fallback.
+# Note that Selenium Manager does not work in some architectures (for example,
+# Linux on arm64/aarch64); in those architectures the Selenium driver will try
+# to find the executable, but the executable may need to be explicitly set if
+# not found by the driver.
+#browserPath =
+
 [stats]
 # Comma-separated list of IP addresses (or CIDR networks) that are allowed to
 # access the stats endpoint.
