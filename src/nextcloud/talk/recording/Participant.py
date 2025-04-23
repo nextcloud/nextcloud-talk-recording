@@ -482,8 +482,6 @@ class Participant():
         else:
             raise Exception('Invalid browser: ' + browser)
 
-        self.seleniumHelper.driver.get(nextcloudUrl)
-
     def joinCall(self, token):
         """
         Joins the call in the room with the given token.
