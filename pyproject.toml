@@ -58,6 +58,7 @@ disable = [
     "too-many-arguments",
     "too-many-instance-attributes",
     "too-many-locals",
+    "too-many-positional-arguments",
     "too-many-statements",
     # FIXME: these messages should be fixed rather than disabled
     "bare-except",
