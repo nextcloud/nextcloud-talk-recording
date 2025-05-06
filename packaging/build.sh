@@ -71,20 +71,14 @@ function cleanUp() {
 	# the cleanup anyway, but just in case).
 	set +o errexit
 
-	# The name filter must be specified as "^/XXX$" to get an exact match; using
-	# just "XXX" would match every name that contained "XXX".
-	if [ -n "$(docker ps --all --quiet --filter status=created --filter name="^/$CONTAINER-debian11$")" ]; then
-		echo "Removing Docker container $CONTAINER-debian11"
-		docker rm --volumes --force $CONTAINER-debian11
-	fi
-	if [ -n "$(docker ps --all --quiet --filter status=created --filter name="^/$CONTAINER-ubuntu20.04$")" ]; then
-		echo "Removing Docker container $CONTAINER-ubuntu20.04"
-		docker rm --volumes --force $CONTAINER-ubuntu20.04
-	fi
-	if [ -n "$(docker ps --all --quiet --filter status=created --filter name="^/$CONTAINER-ubuntu22.04$")" ]; then
-		echo "Removing Docker container $CONTAINER-ubuntu22.04"
-		docker rm --volumes --force $CONTAINER-ubuntu22.04
-	fi
+	for TARGET in $TARGETS; do
+		# The name filter must be specified as "^/XXX$" to get an exact match;
+		# using just "XXX" would match every name that contained "XXX".
+		if [ -n "$(docker ps --all --quiet --filter status=created --filter name="^/$CONTAINER-$TARGET$")" ]; then
+			echo "Removing Docker container $CONTAINER-$TARGET"
+			docker rm --volumes --force $CONTAINER-$TARGET
+		fi
+	done
 }
 
 # Exit immediately on errors.
@@ -163,6 +157,8 @@ function setupBuildEnvironmentInUbuntu2204() {
 	docker exec $CONTAINER-ubuntu22.04 bash -c "apt-get install --assume-yes pulseaudio python3-async-generator python3-trio python3-wsproto"
 }
 
+TARGETS="debian11 ubuntu20.04 ubuntu22.04"
+
 declare -A TARGET_NAMES
 TARGET_NAMES["debian11"]="Debian 11"
 TARGET_NAMES["ubuntu20.04"]="Ubuntu 20.04"
@@ -180,49 +176,28 @@ TARGET_SETUP_FUNCTIONS["ubuntu22.04"]="setupBuildEnvironmentInUbuntu2204"
 
 # If the containers are not found new ones are prepared. Otherwise the existing
 # containers are used.
-#
-# The name filter must be specified as "^/XXX$" to get an exact match; using
-# just "XXX" would match every name that contained "XXX".
-if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-debian11$")" ]; then
-	echo "Creating Nextcloud Talk recording packages builder container for ${TARGET_NAMES[debian11]}"
-	docker run --detach --tty --volume "$(realpath ../)":/nextcloud-talk-recording/ --name=$CONTAINER-debian11 $DOCKER_OPTIONS ${TARGET_IMAGES[debian11]} bash
+for TARGET in $TARGETS; do
+	# The name filter must be specified as "^/XXX$" to get an exact match; using
+	# just "XXX" would match every name that contained "XXX".
+	if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-$TARGET$")" ]; then
+		echo "Creating Nextcloud Talk recording packages builder container for ${TARGET_NAMES[$TARGET]}"
+		docker run --detach --tty --volume "$(realpath ../)":/nextcloud-talk-recording/ --name=$CONTAINER-$TARGET $DOCKER_OPTIONS ${TARGET_IMAGES[$TARGET]} bash
 
-	${TARGET_SETUP_FUNCTIONS[debian11]}
-fi
-if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-ubuntu20.04$")" ]; then
-	echo "Creating Nextcloud Talk recording packages builder container for ${TARGET_NAMES[ubuntu20.04]}"
-	docker run --detach --tty --volume "$(realpath ../)":/nextcloud-talk-recording/ --name=$CONTAINER-ubuntu20.04 $DOCKER_OPTIONS ${TARGET_IMAGES[ubuntu20.04]} bash
-
-	${TARGET_SETUP_FUNCTIONS[ubuntu20.04]}
-fi
-if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-ubuntu22.04$")" ]; then
-	echo "Creating Nextcloud Talk recording packages builder container for ${TARGET_NAMES[ubuntu22.04]}"
-	docker run --detach --tty --volume "$(realpath ../)":/nextcloud-talk-recording/ --name=$CONTAINER-ubuntu22.04 $DOCKER_OPTIONS ${TARGET_IMAGES[ubuntu22.04]} bash
-
-	${TARGET_SETUP_FUNCTIONS[ubuntu22.04]}
-fi
+		${TARGET_SETUP_FUNCTIONS[$TARGET]}
+	fi
+done
 
 # Start existing containers if they are stopped.
-if [ -n "$(docker ps --all --quiet --filter status=exited --filter name="^/$CONTAINER-debian11$")" ]; then
-	echo "Starting Talk recording packages builder container for ${TARGET_NAMES[debian11]}"
-	docker start $CONTAINER-debian11
-fi
-if [ -n "$(docker ps --all --quiet --filter status=exited --filter name="^/$CONTAINER-ubuntu20.04$")" ]; then
-	echo "Starting Talk recording packages builder container for ${TARGET_NAMES[ubuntu20.04]}"
-	docker start $CONTAINER-ubuntu20.04
-fi
-if [ -n "$(docker ps --all --quiet --filter status=exited --filter name="^/$CONTAINER-ubuntu22.04$")" ]; then
-	echo "Starting Talk recording packages builder container for ${TARGET_NAMES[ubuntu22.04]}"
-	docker start $CONTAINER-ubuntu22.04
-fi
+for TARGET in $TARGETS; do
+	if [ -n "$(docker ps --all --quiet --filter status=exited --filter name="^/$CONTAINER-$TARGET$")" ]; then
+		echo "Starting Talk recording packages builder container for ${TARGET_NAMES[$TARGET]}"
+		docker start $CONTAINER-$TARGET
+	fi
+done
 
 USER=$(ls -l --numeric-uid-gid --directory . | sed 's/ \+/ /g' | cut --delimiter " " --fields 3)
 
-echo "Building recording backend packages for ${TARGET_NAMES[debian11]}"
-docker exec --tty --interactive --user $USER --workdir /nextcloud-talk-recording/packaging $CONTAINER-debian11 make
-
-echo "Building recording backend packages for ${TARGET_NAMES[ubuntu20.04]}"
-docker exec --tty --interactive --user $USER --workdir /nextcloud-talk-recording/packaging $CONTAINER-ubuntu20.04 make
-
-echo "Building recording backend packages for ${TARGET_NAMES[ubuntu22.04]}"
-docker exec --tty --interactive --user $USER --workdir /nextcloud-talk-recording/packaging $CONTAINER-ubuntu22.04 make
+for TARGET in $TARGETS; do
+	echo "Building recording backend packages for ${TARGET_NAMES[$TARGET]}"
+	docker exec --tty --interactive --user $USER --workdir /nextcloud-talk-recording/packaging $CONTAINER-$TARGET make
+done
