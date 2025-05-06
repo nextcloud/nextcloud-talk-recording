@@ -234,6 +234,7 @@ It is very likely that the recording server could not send the request to mark t
 
 It is typically one of the cases below:
 - The shared secret between the signaling server and the recording server (`internalsecret` in signaling sections) is not the same (`Authentication failed for signaling server` is shown in the logs of the recording server).
+  - If the shared secret is not set to any value in the signaling server configuration file (`clients->internalsecret` in `/etc/nextcloud-spreed-signaling/server.conf`) the authentication is not even tried and the recording server is just rejected by the signaling server (`Internal clients are not supported by the signaling server, is \'internalsecret\' set in the signaling server configuration file?` is shown in the logs of the recording server). Note that if Talk < 22.0.0, < 21.1.0 or < 20.1.7 is used rather than that message a `selenium.common.exceptions.TimeoutException` is shown instead in the logs, but a timeout does not necessarily mean that the shared secret is not set.
 - The recording server was not able to connect to the signaling server. Both the logs of the recording server and the signaling server may provide some hints, although the problem is typically related to the firewall.
 - The ffmpeg configuration is invalid (`recorder ended unexpectedly` is shown in the logs of the recording server; note that this error could appear in other (strange) cases too, like if ffmpeg crashes). The specific cause can be seen in the messages tagged as `nextcloud.talk.recording.Service.recorder`.
 
