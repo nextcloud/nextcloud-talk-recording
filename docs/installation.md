@@ -227,13 +227,13 @@ This error will be logged when a recording was started, but the recording server
 ### The recording is stuck in _Starting_ but never starts nor fails
 
 It is very likely that the recording server could not send the request to mark the recording as started or failed. It is typically one of the cases below:
-- The shared secret between the Nextcloud server and the recording server is not the same (`Checksum verification failed` is shown in the logs of the recording server).
+- The shared secret between the Nextcloud server and the recording server (`secret` in backend sections) is not the same (`Checksum verification failed` is shown in the logs of the recording server).
 - The Nextcloud server is using a self-signed certificate (`certificate verify failed: self signed certificate` is shown in the logs of the recording server). The recording server can be configured to skip verification of the Nextcloud server certificate with the `skipverify` setting in `server.conf`. However, please note that this should be used only for development and a proper certificate should be used in production.
 
 ### The recording fails to be started
 
 It is typically one of the cases below:
-- The shared secret between the signaling server and the recording server is not the same (`Authentication failed for signaling server` is shown in the logs of the recording server).
+- The shared secret between the signaling server and the recording server (`internalsecret` in signaling sections) is not the same (`Authentication failed for signaling server` is shown in the logs of the recording server).
 - The recording server was not able to connect to the signaling server. Both the logs of the recording server and the signaling server may provide some hints, although the problem is typically related to the firewall.
 - The ffmpeg configuration is invalid (`recorder ended unexpectedly` is shown in the logs of the recording server; note that this error could appear in other (strange) cases too, like if ffmpeg crashes). The specific cause can be seen in the messages tagged as `nextcloud.talk.recording.Service.recorder`.
 
