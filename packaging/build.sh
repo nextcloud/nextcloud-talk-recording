@@ -168,6 +168,11 @@ TARGET_NAMES["debian11"]="Debian 11"
 TARGET_NAMES["ubuntu20.04"]="Ubuntu 20.04"
 TARGET_NAMES["ubuntu22.04"]="Ubuntu 22.04"
 
+declare -A TARGET_IMAGES
+TARGET_IMAGES["debian11"]="debian:11"
+TARGET_IMAGES["ubuntu20.04"]="ubuntu:20.04"
+TARGET_IMAGES["ubuntu22.04"]="ubuntu:22.04"
+
 # If the containers are not found new ones are prepared. Otherwise the existing
 # containers are used.
 #
@@ -175,19 +180,19 @@ TARGET_NAMES["ubuntu22.04"]="Ubuntu 22.04"
 # just "XXX" would match every name that contained "XXX".
 if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-debian11$")" ]; then
 	echo "Creating Nextcloud Talk recording packages builder container for ${TARGET_NAMES[debian11]}"
-	docker run --detach --tty --volume "$(realpath ../)":/nextcloud-talk-recording/ --name=$CONTAINER-debian11 $DOCKER_OPTIONS debian:11 bash
+	docker run --detach --tty --volume "$(realpath ../)":/nextcloud-talk-recording/ --name=$CONTAINER-debian11 $DOCKER_OPTIONS ${TARGET_IMAGES[debian11]} bash
 
 	setupBuildEnvironmentInDebian11
 fi
 if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-ubuntu20.04$")" ]; then
 	echo "Creating Nextcloud Talk recording packages builder container for ${TARGET_NAMES[ubuntu20.04]}"
-	docker run --detach --tty --volume "$(realpath ../)":/nextcloud-talk-recording/ --name=$CONTAINER-ubuntu20.04 $DOCKER_OPTIONS ubuntu:20.04 bash
+	docker run --detach --tty --volume "$(realpath ../)":/nextcloud-talk-recording/ --name=$CONTAINER-ubuntu20.04 $DOCKER_OPTIONS ${TARGET_IMAGES[ubuntu20.04]} bash
 
 	setupBuildEnvironmentInUbuntu2004
 fi
 if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-ubuntu22.04$")" ]; then
 	echo "Creating Nextcloud Talk recording packages builder container for ${TARGET_NAMES[ubuntu22.04]}"
-	docker run --detach --tty --volume "$(realpath ../)":/nextcloud-talk-recording/ --name=$CONTAINER-ubuntu22.04 $DOCKER_OPTIONS ubuntu:22.04 bash
+	docker run --detach --tty --volume "$(realpath ../)":/nextcloud-talk-recording/ --name=$CONTAINER-ubuntu22.04 $DOCKER_OPTIONS ${TARGET_IMAGES[ubuntu22.04]} bash
 
 	setupBuildEnvironmentInUbuntu2204
 fi
