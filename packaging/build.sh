@@ -91,13 +91,19 @@ trap cleanUp EXIT
 # the volumes in the container) expect that.
 cd "$(dirname $0)"
 
+SUPPORTED_TARGETS="debian11 ubuntu20.04 ubuntu22.04"
+
 HELP="Usage: $(basename $0) [OPTION]...
 
 Options (all options can be omitted, but when present they must appear in the
 following order):
 --help prints this help and exits.
 --container CONTAINER_NAME the name (prefix) to assign to the containers.
-  Defaults to nextcloud-talk-recording-packages-builder."
+  Defaults to nextcloud-talk-recording-packages-builder.
+--targets BUILD_TARGETS a space separated list of distribution identifiers to
+  build the packages for.
+  Supported targets: $SUPPORTED_TARGETS
+  Defaults to all the supported distributions."
 if [ "$1" = "--help" ]; then
 	echo "$HELP"
 
@@ -110,6 +116,22 @@ if [ "$1" = "--container" ]; then
 
 	shift 2
 fi
+
+TARGETS=$SUPPORTED_TARGETS
+if [ "$1" = "--targets" ]; then
+	TARGETS="$2"
+
+	shift 2
+fi
+
+for TARGET in $TARGETS; do
+	if [[ ! " $SUPPORTED_TARGETS " =~ " $TARGET " ]]; then
+		echo "Target not supported: $TARGET"
+		echo "Supported targets: $SUPPORTED_TARGETS"
+
+		exit 1
+	fi
+done
 
 if [ -n "$1" ]; then
 	echo "Invalid option (or at invalid position): $1
@@ -156,8 +178,6 @@ function setupBuildEnvironmentInUbuntu2204() {
 	# packages being built.
 	docker exec $CONTAINER-ubuntu22.04 bash -c "apt-get install --assume-yes pulseaudio python3-async-generator python3-trio python3-wsproto"
 }
-
-TARGETS="debian11 ubuntu20.04 ubuntu22.04"
 
 declare -A TARGET_NAMES
 TARGET_NAMES["debian11"]="Debian 11"
