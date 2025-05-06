@@ -127,35 +127,23 @@ fi
 
 setOperatingSystemAbstractionVariables
 
-# If the containers are not found new ones are prepared. Otherwise the existing
-# containers are used.
-#
-# The name filter must be specified as "^/XXX$" to get an exact match; using
-# just "XXX" would match every name that contained "XXX".
-if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-debian11$")" ]; then
-	echo "Creating Nextcloud Talk recording packages builder container for Debian 11"
-	docker run --detach --tty --volume "$(realpath ../)":/nextcloud-talk-recording/ --name=$CONTAINER-debian11 $DOCKER_OPTIONS debian:11 bash
-
+function setupBuildEnvironmentInDebian11() {
 	echo "Installing required build dependencies"
 	# "noninteractive" is used to provide default settings instead of asking for
 	# them (for example, for tzdata).
 	docker exec $CONTAINER-debian11 bash -c "apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install --assume-yes make python3 python3-pip python3-venv python3-all debhelper dh-python git dh-exec"
 	docker exec $CONTAINER-debian11 bash -c "python3 -m pip install stdeb build 'setuptools >= 61.0'"
-fi
-if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-ubuntu20.04$")" ]; then
-	echo "Creating Nextcloud Talk recording packages builder container for Ubuntu 20.04"
-	docker run --detach --tty --volume "$(realpath ../)":/nextcloud-talk-recording/ --name=$CONTAINER-ubuntu20.04 $DOCKER_OPTIONS ubuntu:20.04 bash
+}
 
+function setupBuildEnvironmentInUbuntu2004() {
 	echo "Installing required build dependencies"
 	# "noninteractive" is used to provide default settings instead of asking for
 	# them (for example, for tzdata).
 	docker exec $CONTAINER-ubuntu20.04 bash -c "apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install --assume-yes make python3 python3-pip python3-venv python3-all debhelper dh-python git dh-exec"
 	docker exec $CONTAINER-ubuntu20.04 bash -c "python3 -m pip install stdeb build 'setuptools >= 61.0'"
-fi
-if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-ubuntu22.04$")" ]; then
-	echo "Creating Nextcloud Talk recording packages builder container for Ubuntu 22.04"
-	docker run --detach --tty --volume "$(realpath ../)":/nextcloud-talk-recording/ --name=$CONTAINER-ubuntu22.04 $DOCKER_OPTIONS ubuntu:22.04 bash
+}
 
+function setupBuildEnvironmentInUbuntu2204() {
 	echo "Installing required build dependencies"
 	# "noninteractive" is used to provide default settings instead of asking for
 	# them (for example, for tzdata).
@@ -173,6 +161,30 @@ if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-ubuntu22.04$")" ]
 	# Some packages need to be installed so the unit tests can be run in the
 	# packages being built.
 	docker exec $CONTAINER-ubuntu22.04 bash -c "apt-get install --assume-yes pulseaudio python3-async-generator python3-trio python3-wsproto"
+}
+
+# If the containers are not found new ones are prepared. Otherwise the existing
+# containers are used.
+#
+# The name filter must be specified as "^/XXX$" to get an exact match; using
+# just "XXX" would match every name that contained "XXX".
+if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-debian11$")" ]; then
+	echo "Creating Nextcloud Talk recording packages builder container for Debian 11"
+	docker run --detach --tty --volume "$(realpath ../)":/nextcloud-talk-recording/ --name=$CONTAINER-debian11 $DOCKER_OPTIONS debian:11 bash
+
+	setupBuildEnvironmentInDebian11
+fi
+if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-ubuntu20.04$")" ]; then
+	echo "Creating Nextcloud Talk recording packages builder container for Ubuntu 20.04"
+	docker run --detach --tty --volume "$(realpath ../)":/nextcloud-talk-recording/ --name=$CONTAINER-ubuntu20.04 $DOCKER_OPTIONS ubuntu:20.04 bash
+
+	setupBuildEnvironmentInUbuntu2004
+fi
+if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-ubuntu22.04$")" ]; then
+	echo "Creating Nextcloud Talk recording packages builder container for Ubuntu 22.04"
+	docker run --detach --tty --volume "$(realpath ../)":/nextcloud-talk-recording/ --name=$CONTAINER-ubuntu22.04 $DOCKER_OPTIONS ubuntu:22.04 bash
+
+	setupBuildEnvironmentInUbuntu2204
 fi
 
 # Start existing containers if they are stopped.
