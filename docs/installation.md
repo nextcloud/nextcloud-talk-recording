@@ -157,7 +157,7 @@ The recording server must be allowed to access any signaling server used by the 
 
 Each signaling server needs to be configured in its own section. Any section name can be used, except the reserved names for built-in sections, like `logs`, `backend`, `signaling`... The section names must be added to `signaling->signalings`.
 
-Each signaling section requires a `url` and an `internalsecret` (unless a common `internalsecret` is set in `signaling->internalsecret`). The `url` must be set to the URL of the signaling server (the same signaling server URL set in Talk Administration settings). The `internalsecret` is a shared value between the signaling server and the recording server used to allow the recording server to access the signaling server. This secret is unrelated to the secret used in the Talk administration settings and shared between the Nextcloud server and the recording server. This value must match the value of `clients->internalsecret` in `/etc/nextcloud-spreed-signaling/server.conf`, which is automatically generated when the signaling server is installed. Nevertheless a custom value can be set, as long as it matches in both the signaling server and the recording server.
+Each signaling section requires a `url` and an `internalsecret` (unless a common `internalsecret` is set in `signaling->internalsecret`). The `url` must be set to the URL of the signaling server (the same signaling server URL set in Talk Administration settings). The `internalsecret` is a shared value between the signaling server and the recording server used to allow the recording server to access the signaling server. This secret is unrelated to the secret used in the Talk administration settings and shared between the Nextcloud server and the recording server. This value must match the value of `clients->internalsecret` in `/etc/nextcloud-spreed-signaling/server.conf`, which may have been automatically generated or may need to be explicitly set, depending on how the signaling server was installed. Nevertheless, even if it was automatically generated, a custom value can be set as long as it matches in both the signaling server and the recording server.
 
 In the example below comments were stripped for briefness, but it is recommended to keep them in the configuration file:
 ```
@@ -227,13 +227,14 @@ This error will be logged when a recording was started, but the recording server
 ### The recording is stuck in _Starting_ but never starts nor fails
 
 It is very likely that the recording server could not send the request to mark the recording as started or failed. It is typically one of the cases below:
-- The shared secret between the Nextcloud server and the recording server is not the same (`Checksum verification failed` is shown in the logs of the recording server).
+- The shared secret between the Nextcloud server and the recording server (`secret` in backend sections) is not the same (`Checksum verification failed` is shown in the logs of the recording server).
 - The Nextcloud server is using a self-signed certificate (`certificate verify failed: self signed certificate` is shown in the logs of the recording server). The recording server can be configured to skip verification of the Nextcloud server certificate with the `skipverify` setting in `server.conf`. However, please note that this should be used only for development and a proper certificate should be used in production.
 
 ### The recording fails to be started
 
 It is typically one of the cases below:
-- The shared secret between the signaling server and the recording server is not the same (`Authentication failed for signaling server` is shown in the logs of the recording server).
+- The shared secret between the signaling server and the recording server (`internalsecret` in signaling sections) is not the same (`Authentication failed for signaling server` is shown in the logs of the recording server).
+  - If the shared secret is not set to any value in the signaling server configuration file (`clients->internalsecret` in `/etc/nextcloud-spreed-signaling/server.conf`) the authentication is not even tried and the recording server is just rejected by the signaling server (`Internal clients are not supported by the signaling server, is \'internalsecret\' set in the signaling server configuration file?` is shown in the logs of the recording server). Note that if Talk < 22.0.0, < 21.1.0 or < 20.1.7 is used rather than that message a `selenium.common.exceptions.TimeoutException` is shown instead in the logs, but a timeout does not necessarily mean that the shared secret is not set.
 - The recording server was not able to connect to the signaling server. Both the logs of the recording server and the signaling server may provide some hints, although the problem is typically related to the firewall.
 - The ffmpeg configuration is invalid (`recorder ended unexpectedly` is shown in the logs of the recording server; note that this error could appear in other (strange) cases too, like if ffmpeg crashes). The specific cause can be seen in the messages tagged as `nextcloud.talk.recording.Service.recorder`.
 
