@@ -32,6 +32,7 @@ metricsRecordingsCurrent = Gauge('recording_recordings_current', 'The current nu
 metricsRecordingsFailedTotal = Counter('recording_recordings_failed_total', 'The total number of failed recordings', ['backend'])
 metricsRecordingsUploadsFailedTotal = Counter('recording_recordings_uploads_failed_total', 'The total number of failed uploads', ['backend'])
 metricsRecordingsTotal = Counter('recording_recordings_total', 'The total number of recordings', ['backend'])
+metricsRecordingsDurationSeconds = Counter('recording_recordings_duration_seconds', 'The total duration of all recordings', ['backend'])
 
 def isAddressInNetworks(address, networks):
     """
@@ -468,6 +469,7 @@ def _stopRecordingService(service, actorType, actorId):
                 servicesStopping.pop(serviceId)
 
             metricsRecordingsCurrent.labels(service.backend).dec()
+            metricsRecordingsDurationSeconds.labels(service.backend).inc(service.getRecordingDuration())
 
 # Despite this handler it seems that in some cases the geckodriver could have
 # been killed already when it is executed, which unfortunately prevents a proper
