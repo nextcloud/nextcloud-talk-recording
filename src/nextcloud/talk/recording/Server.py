@@ -29,6 +29,8 @@ from .Service import Service
 # prometheus_client removes "_total" from the counter name, so "_current" needs
 # to be added to the gauge to prevent a duplicated name.
 metricsRecordingsCurrent = Gauge('recording_recordings_current', 'The current number of recordings', ['backend'])
+metricsRecordingsFailedTotal = Counter('recording_recordings_failed_total', 'The total number of failed recordings', ['backend'])
+metricsRecordingsUploadsFailedTotal = Counter('recording_recordings_uploads_failed_total', 'The total number of failed uploads', ['backend'])
 metricsRecordingsTotal = Counter('recording_recordings_total', 'The total number of recordings', ['backend'])
 
 def isAddressInNetworks(address, networks):
@@ -377,7 +379,7 @@ def _startRecordingService(service, actorType, actorId):
             services.pop(serviceId)
 
             metricsRecordingsCurrent.labels(service.backend).dec()
-
+            metricsRecordingsFailedTotal.labels(service.backend).inc()
 
 def stopRecording(backend, token, data):
     """
@@ -451,6 +453,12 @@ def _stopRecordingService(service, actorType, actorId):
         service.stop(actorType, actorId)
     except Exception:
         app.logger.exception("Failed to stop recording: %s %s", service.backend, service.token)
+
+        # Besides explicit failures to upload the recording, failures to stop
+        # the recording (or, rather, to notify the Nextcloud server that the
+        # recording was stopped) are implicitly failures to upload the
+        # recording, as the upload will not be even tried.
+        metricsRecordingsUploadsFailedTotal.labels(service.backend).inc()
     finally:
         with servicesLock:
             if serviceId not in servicesStopping:
