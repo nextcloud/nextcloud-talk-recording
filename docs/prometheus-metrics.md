@@ -13,6 +13,6 @@ Only clients connecting from an IP that is included in the `allowed_ips` value o
 The following metrics are available:
 
 | Metric                                            | Type      | Since     | Description                                                               | Labels                            |
-| :------------------------------------------------ | :-------- | --------: | :------------------------------------------------------------------------ | :-------------------------------- |
-| `recording_recordings_current`                    | Gauge     | 1.0.0     | The current number of recordings                                          | `backend`                         |
-| `recording_recordings_total`                      | Counter   | 1.0.0     | The total number of recordings                                            | `backend`                         |
+| :------------------------------------------------ | :-------- | --------: | :----------------------------------------------------------------------------------------------------- | :-------------------------------- |
+| `recording_recordings_current`                    | Gauge     | 1.0.0     | The current number of recordings                                                                       | `backend`                         |
+| `recording_recordings_total`                      | Counter   | 1.0.0     | The total number of recordings                                                                         | `backend`                         |
