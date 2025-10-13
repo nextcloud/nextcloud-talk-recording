@@ -127,7 +127,7 @@
 # will use Google Chrome, or Chromium if Google Chrome is not installed.
 # Allowed values: firefox, chrome
 # Defaults to firefox
-# browser = firefox
+#browser = firefox
 
 # Path to the Selenium driver to use for recordings.
 # If set the driver must match the browser being used (for example,

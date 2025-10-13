@@ -242,7 +242,7 @@ It is typically one of the cases below:
 
 In this case the explanation is probably found in the Nextcloud server logs. Typically the problem is that the recording size exceeded the values configured for `upload_max_filesize` (`The uploaded file exceeds the upload_max_filesize directive in php.ini` is shown in the logs of the Nextcloud server) or `post_max_size` (`OCA\\Talk\\Controller\\RecordingController::store(): Argument #1 ($owner) must be of type string, null given` is shown in the logs of the Nextcloud server).
 
-If a video could not be uploaded it will be still kept in the recording server under `/{TEMPORARY-DIRECTORY-FOR-RECORDINGS}/{CONVERSATION-TOKEN}`. Note that the default temporary directory for recordings is `/tmp/`, so a recorded video that could not be uploaded may be removed if the machine is restarted. The conversation token is the part after `/call/` in the URL of the conversation.
+If a video could not be uploaded it will be still kept in the recording server under `/{TEMPORARY-DIRECTORY-FOR-RECORDINGS}/{SANITIZED-BACKEND-URL}/{CONVERSATION-TOKEN}`. Note that the default temporary directory for recordings is `/tmp/`, so a recorded video that could not be uploaded may be removed if the machine is restarted. The sanitized backend URL is the URL of the backend, but including only its alphanumeric characters. The conversation token is the part after `/call/` in the URL of the conversation.
 
 ### The recording was uploaded, but the recording shows that the connection could not be established with other participants
 
