@@ -270,6 +270,22 @@ class Config:
         """
         return self._configParser.get('ffmpeg', 'common', fallback='ffmpeg -loglevel level+warning -n').split()
 
+    def getFfmpegInputAudio(self):
+        """
+        Returns the (additional) options given to ffmpeg for the audio input.
+
+        Defaults to [].
+        """
+        return self._configParser.get('ffmpeg', 'inputaudio', fallback='').split()
+
+    def getFfmpegInputVideo(self):
+        """
+        Returns the (additional) options given to ffmpeg for the video input.
+
+        Defaults to [].
+        """
+        return self._configParser.get('ffmpeg', 'inputvideo', fallback='').split()
+
     def getFfmpegOutputAudio(self):
         """
         Returns the options given to ffmpeg to encode the audio output.

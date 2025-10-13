@@ -17,12 +17,14 @@ class RecorderArgumentsBuilder:
     Some of the recorder arguments, like the arguments for the output video
     codec, can be customized. By default they are got from the configuration,
     either a specific value set in the configuration file or a default value,
-    but the configuration value can be overriden by explicitly setting it in
-    RecorderArgumentsBuilder.
+    but the configuration value can be extended or fully overriden, depending on
+    the case, by explicitly setting it in RecorderArgumentsBuilder.
     """
 
     def __init__(self):
         self._ffmpegCommon = None
+        self._ffmpegInputAudio = None
+        self._ffmpegInputVideo = None
         self._ffmpegOutputAudio = None
         self._ffmpegOutputVideo = None
         self._extension = None
@@ -43,8 +45,8 @@ class RecorderArgumentsBuilder:
         """
 
         ffmpegCommon = self.getFfmpegCommon()
-        ffmpegInputAudio = ['-f', 'pulse', '-i', audioSourceIndex]
-        ffmpegInputVideo = ['-f', 'x11grab', '-draw_mouse', '0', '-video_size', f'{width}x{height}', '-i', displayId]
+        ffmpegInputAudio = self.getFfmpegInputAudio(audioSourceIndex)
+        ffmpegInputVideo = self.getFfmpegInputVideo(width, height, displayId)
         ffmpegOutputAudio = self.getFfmpegOutputAudio()
         ffmpegOutputVideo = self.getFfmpegOutputVideo()
 
@@ -74,6 +76,30 @@ class RecorderArgumentsBuilder:
             return self._ffmpegCommon
 
         return config.getFfmpegCommon()
+
+    def getFfmpegInputAudio(self, audioSourceIndex):
+        """
+        Returns the options given to ffmpeg for the audio input.
+        """
+        ffmpegInputAudio = config.getFfmpegInputAudio()
+
+        if self._ffmpegInputAudio is not None:
+            ffmpegInputAudio = self._ffmpegInputAudio
+
+        return ffmpegInputAudio + \
+            ['-f', 'pulse', '-i', audioSourceIndex]
+
+    def getFfmpegInputVideo(self, width, height, displayId):
+        """
+        Returns the options given to ffmpeg for the video input.
+        """
+        ffmpegInputVideo = config.getFfmpegInputVideo()
+
+        if self._ffmpegInputVideo is not None:
+            ffmpegInputVideo = self._ffmpegInputVideo
+
+        return ffmpegInputVideo + \
+            ['-f', 'x11grab', '-draw_mouse', '0', '-video_size', f'{width}x{height}', '-i', displayId]
 
     def getFfmpegOutputAudio(self):
         """
@@ -115,6 +141,18 @@ class RecorderArgumentsBuilder:
         given to ffmpeg.
         """
         self._ffmpegCommon = ffmpegCommon
+
+    def setFfmpegInputAudio(self, ffmpegInputAudio):
+        """
+        Sets the (additional) options given to ffmpeg for the audio input.
+        """
+        self._ffmpegInputAudio = ffmpegInputAudio
+
+    def setFfmpegInputVideo(self, ffmpegInputVideo):
+        """
+        Sets the (additional) options given to ffmpeg for the video input.
+        """
+        self._ffmpegInputVideo = ffmpegInputVideo
 
     def setFfmpegOutputAudio(self, ffmpegOutputAudio):
         """

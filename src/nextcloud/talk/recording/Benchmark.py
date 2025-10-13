@@ -170,6 +170,8 @@ class BenchmarkService:
 
             recorderArgumentsBuilder = RecorderArgumentsBuilder()
             recorderArgumentsBuilder.setFfmpegCommon(args.ffmpeg_common.split())
+            recorderArgumentsBuilder.setFfmpegInputAudio(args.ffmpeg_input_audio.split())
+            recorderArgumentsBuilder.setFfmpegInputVideo(args.ffmpeg_input_video.split())
             recorderArgumentsBuilder.setFfmpegOutputAudio(args.ffmpeg_output_audio.split())
             recorderArgumentsBuilder.setFfmpegOutputVideo(args.ffmpeg_output_video.split())
             recorderArgumentsBuilder.setExtension(f".{extension}")
@@ -311,6 +313,8 @@ def main():
     parser.add_argument("--width", help="output width", default=defaultConfig.getBackendVideoWidth(""), type=int)
     parser.add_argument("--height", help="output height", default=defaultConfig.getBackendVideoHeight(""), type=int)
     parser.add_argument("--ffmpeg-common", help="ffmpeg executable and global options", default=" ".join(defaultConfig.getFfmpegCommon()), type=str)
+    parser.add_argument("--ffmpeg-input-audio", help="(additional) input audio options for ffmpeg", default=" ".join(defaultConfig.getFfmpegInputAudio()), type=str)
+    parser.add_argument("--ffmpeg-input-video", help="(additional) input video options for ffmpeg", default=" ".join(defaultConfig.getFfmpegInputVideo()), type=str)
     parser.add_argument("--ffmpeg-output-audio", help="output audio options for ffmpeg", default=" ".join(defaultConfig.getFfmpegOutputAudio()), type=str)
     parser.add_argument("--ffmpeg-output-video", help="output video options for ffmpeg", default=" ".join(defaultConfig.getFfmpegOutputVideo()), type=str)
     parser.add_argument("--audio-only", help="audio only recording", action="store_true")

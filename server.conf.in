@@ -107,6 +107,18 @@
 # ffmpeg. The options given here fully override the default global options.
 #common = ffmpeg -loglevel level+warning -n
 
+# The (additional) options given to ffmpeg for the audio input. The options
+# given here extend the default options for the audio input, although they do
+# not override them.
+# Default options: '-f pulse -i {AUDIO_SOURCE}'
+#inputaudio =
+
+# The (additional) options given to ffmpeg for the video input. The options
+# given here extend the default options for the video input, although they do
+# not override them.
+# Default options: '-f x11grab -draw_mouse 0 -video_size {WIDTH}x{HEIGHT} -i {VIDEO_SOURCE}'
+#inputvideo =
+
 # The options given to ffmpeg to encode the audio output. The options given here
 # fully override the default options for the audio output.
 #outputaudio = -c:a libopus
