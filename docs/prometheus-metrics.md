@@ -14,11 +14,11 @@ The following metrics are available:
 
 | Metric                                            | Type      | Since     | Description                                                               | Labels                            |
 | :------------------------------------------------ | :-------- | --------: | :----------------------------------------------------------------------------------------------------- | :-------------------------------- |
-| `recording_recordings_current`                    | Gauge     | 1.0.0     | The current number of recordings                                                                       | `backend`                         |
-| `recording_recordings_failed_total`               | Counter   | 1.0.0     | The total number of failed recordings, see [notes](#recording_recordings_failed_total)                 | `backend`                         |
-| `recording_recordings_uploads_failed_total`       | Counter   | 1.0.0     | The total number of failed uploads, see [notes](#recording_recordings_uploads_failed_total)            | `backend`                         |
-| `recording_recordings_total`                      | Counter   | 1.0.0     | The total number of recordings                                                                         | `backend`                         |
-| `recording_recordings_duration_seconds`           | Counter   | 1.0.0     | The total duration of all recordings, see [notes](#recording_recordings_duration_seconds)              | `backend`                         |
+| `recording_recordings_current`                    | Gauge     | 0.2.0     | The current number of recordings                                                                       | `backend`                         |
+| `recording_recordings_failed_total`               | Counter   | 0.2.0     | The total number of failed recordings, see [notes](#recording_recordings_failed_total)                 | `backend`                         |
+| `recording_recordings_uploads_failed_total`       | Counter   | 0.2.0     | The total number of failed uploads, see [notes](#recording_recordings_uploads_failed_total)            | `backend`                         |
+| `recording_recordings_total`                      | Counter   | 0.2.0     | The total number of recordings                                                                         | `backend`                         |
+| `recording_recordings_duration_seconds`           | Counter   | 0.2.0     | The total duration of all recordings, see [notes](#recording_recordings_duration_seconds)              | `backend`                         |
 
 ### Notes
 
