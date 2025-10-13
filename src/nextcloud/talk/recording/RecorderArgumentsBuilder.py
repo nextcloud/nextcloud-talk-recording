@@ -79,13 +79,15 @@ class RecorderArgumentsBuilder:
         """
         Returns the options given to ffmpeg for the audio input.
         """
-        return ['-f', 'pulse', '-i', audioSourceIndex]
+        return config.getFfmpegInputAudio() + \
+            ['-f', 'pulse', '-i', audioSourceIndex]
 
     def getFfmpegInputVideo(self, width, height, displayId):
         """
         Returns the options given to ffmpeg for the video input.
         """
-        return ['-f', 'x11grab', '-draw_mouse', '0', '-video_size', f'{width}x{height}', '-i', displayId]
+        return config.getFfmpegInputVideo() + \
+            ['-f', 'x11grab', '-draw_mouse', '0', '-video_size', f'{width}x{height}', '-i', displayId]
 
     def getFfmpegOutputAudio(self):
         """
