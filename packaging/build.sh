@@ -71,20 +71,14 @@ function cleanUp() {
 	# the cleanup anyway, but just in case).
 	set +o errexit
 
-	# The name filter must be specified as "^/XXX$" to get an exact match; using
-	# just "XXX" would match every name that contained "XXX".
-	if [ -n "$(docker ps --all --quiet --filter status=created --filter name="^/$CONTAINER-debian11$")" ]; then
-		echo "Removing Docker container $CONTAINER-debian11"
-		docker rm --volumes --force $CONTAINER-debian11
-	fi
-	if [ -n "$(docker ps --all --quiet --filter status=created --filter name="^/$CONTAINER-ubuntu20.04$")" ]; then
-		echo "Removing Docker container $CONTAINER-ubuntu20.04"
-		docker rm --volumes --force $CONTAINER-ubuntu20.04
-	fi
-	if [ -n "$(docker ps --all --quiet --filter status=created --filter name="^/$CONTAINER-ubuntu22.04$")" ]; then
-		echo "Removing Docker container $CONTAINER-ubuntu22.04"
-		docker rm --volumes --force $CONTAINER-ubuntu22.04
-	fi
+	for TARGET in $TARGETS; do
+		# The name filter must be specified as "^/XXX$" to get an exact match;
+		# using just "XXX" would match every name that contained "XXX".
+		if [ -n "$(docker ps --all --quiet --filter status=created --filter name="^/$CONTAINER-$TARGET$")" ]; then
+			echo "Removing Docker container $CONTAINER-$TARGET"
+			docker rm --volumes --force $CONTAINER-$TARGET
+		fi
+	done
 }
 
 # Exit immediately on errors.
@@ -97,13 +91,19 @@ trap cleanUp EXIT
 # the volumes in the container) expect that.
 cd "$(dirname $0)"
 
+SUPPORTED_TARGETS="debian11 ubuntu20.04 ubuntu22.04"
+
 HELP="Usage: $(basename $0) [OPTION]...
 
 Options (all options can be omitted, but when present they must appear in the
 following order):
 --help prints this help and exits.
 --container CONTAINER_NAME the name (prefix) to assign to the containers.
-  Defaults to nextcloud-talk-recording-packages-builder."
+  Defaults to nextcloud-talk-recording-packages-builder.
+--targets BUILD_TARGETS a space separated list of distribution identifiers to
+  build the packages for.
+  Supported targets: $SUPPORTED_TARGETS
+  Defaults to all the supported distributions."
 if [ "$1" = "--help" ]; then
 	echo "$HELP"
 
@@ -117,6 +117,22 @@ if [ "$1" = "--container" ]; then
 	shift 2
 fi
 
+TARGETS=$SUPPORTED_TARGETS
+if [ "$1" = "--targets" ]; then
+	TARGETS="$2"
+
+	shift 2
+fi
+
+for TARGET in $TARGETS; do
+	if [[ ! " $SUPPORTED_TARGETS " =~ " $TARGET " ]]; then
+		echo "Target not supported: $TARGET"
+		echo "Supported targets: $SUPPORTED_TARGETS"
+
+		exit 1
+	fi
+done
+
 if [ -n "$1" ]; then
 	echo "Invalid option (or at invalid position): $1
 
@@ -127,35 +143,23 @@ fi
 
 setOperatingSystemAbstractionVariables
 
-# If the containers are not found new ones are prepared. Otherwise the existing
-# containers are used.
-#
-# The name filter must be specified as "^/XXX$" to get an exact match; using
-# just "XXX" would match every name that contained "XXX".
-if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-debian11$")" ]; then
-	echo "Creating Nextcloud Talk recording packages builder container for Debian 11"
-	docker run --detach --tty --volume "$(realpath ../)":/nextcloud-talk-recording/ --name=$CONTAINER-debian11 $DOCKER_OPTIONS debian:11 bash
-
+function setupBuildEnvironmentInDebian11() {
 	echo "Installing required build dependencies"
 	# "noninteractive" is used to provide default settings instead of asking for
 	# them (for example, for tzdata).
 	docker exec $CONTAINER-debian11 bash -c "apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install --assume-yes make python3 python3-pip python3-venv python3-all debhelper dh-python git dh-exec"
 	docker exec $CONTAINER-debian11 bash -c "python3 -m pip install stdeb build 'setuptools >= 61.0'"
-fi
-if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-ubuntu20.04$")" ]; then
-	echo "Creating Nextcloud Talk recording packages builder container for Ubuntu 20.04"
-	docker run --detach --tty --volume "$(realpath ../)":/nextcloud-talk-recording/ --name=$CONTAINER-ubuntu20.04 $DOCKER_OPTIONS ubuntu:20.04 bash
+}
 
+function setupBuildEnvironmentInUbuntu2004() {
 	echo "Installing required build dependencies"
 	# "noninteractive" is used to provide default settings instead of asking for
 	# them (for example, for tzdata).
 	docker exec $CONTAINER-ubuntu20.04 bash -c "apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install --assume-yes make python3 python3-pip python3-venv python3-all debhelper dh-python git dh-exec"
 	docker exec $CONTAINER-ubuntu20.04 bash -c "python3 -m pip install stdeb build 'setuptools >= 61.0'"
-fi
-if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-ubuntu22.04$")" ]; then
-	echo "Creating Nextcloud Talk recording packages builder container for Ubuntu 22.04"
-	docker run --detach --tty --volume "$(realpath ../)":/nextcloud-talk-recording/ --name=$CONTAINER-ubuntu22.04 $DOCKER_OPTIONS ubuntu:22.04 bash
+}
 
+function setupBuildEnvironmentInUbuntu2204() {
 	echo "Installing required build dependencies"
 	# "noninteractive" is used to provide default settings instead of asking for
 	# them (for example, for tzdata).
@@ -173,29 +177,47 @@ if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-ubuntu22.04$")" ]
 	# Some packages need to be installed so the unit tests can be run in the
 	# packages being built.
 	docker exec $CONTAINER-ubuntu22.04 bash -c "apt-get install --assume-yes pulseaudio python3-async-generator python3-trio python3-wsproto"
-fi
+}
+
+declare -A TARGET_NAMES
+TARGET_NAMES["debian11"]="Debian 11"
+TARGET_NAMES["ubuntu20.04"]="Ubuntu 20.04"
+TARGET_NAMES["ubuntu22.04"]="Ubuntu 22.04"
+
+declare -A TARGET_IMAGES
+TARGET_IMAGES["debian11"]="debian:11"
+TARGET_IMAGES["ubuntu20.04"]="ubuntu:20.04"
+TARGET_IMAGES["ubuntu22.04"]="ubuntu:22.04"
+
+declare -A TARGET_SETUP_FUNCTIONS
+TARGET_SETUP_FUNCTIONS["debian11"]="setupBuildEnvironmentInDebian11"
+TARGET_SETUP_FUNCTIONS["ubuntu20.04"]="setupBuildEnvironmentInUbuntu2004"
+TARGET_SETUP_FUNCTIONS["ubuntu22.04"]="setupBuildEnvironmentInUbuntu2204"
+
+# If the containers are not found new ones are prepared. Otherwise the existing
+# containers are used.
+for TARGET in $TARGETS; do
+	# The name filter must be specified as "^/XXX$" to get an exact match; using
+	# just "XXX" would match every name that contained "XXX".
+	if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-$TARGET$")" ]; then
+		echo "Creating Nextcloud Talk recording packages builder container for ${TARGET_NAMES[$TARGET]}"
+		docker run --detach --tty --volume "$(realpath ../)":/nextcloud-talk-recording/ --name=$CONTAINER-$TARGET $DOCKER_OPTIONS ${TARGET_IMAGES[$TARGET]} bash
+
+		${TARGET_SETUP_FUNCTIONS[$TARGET]}
+	fi
+done
 
 # Start existing containers if they are stopped.
-if [ -n "$(docker ps --all --quiet --filter status=exited --filter name="^/$CONTAINER-debian11$")" ]; then
-	echo "Starting Talk recording packages builder container for Debian 11"
-	docker start $CONTAINER-debian11
-fi
-if [ -n "$(docker ps --all --quiet --filter status=exited --filter name="^/$CONTAINER-ubuntu20.04$")" ]; then
-	echo "Starting Talk recording packages builder container for Ubuntu 20.04"
-	docker start $CONTAINER-ubuntu20.04
-fi
-if [ -n "$(docker ps --all --quiet --filter status=exited --filter name="^/$CONTAINER-ubuntu22.04$")" ]; then
-	echo "Starting Talk recording packages builder container for Ubuntu 22.04"
-	docker start $CONTAINER-ubuntu22.04
-fi
+for TARGET in $TARGETS; do
+	if [ -n "$(docker ps --all --quiet --filter status=exited --filter name="^/$CONTAINER-$TARGET$")" ]; then
+		echo "Starting Talk recording packages builder container for ${TARGET_NAMES[$TARGET]}"
+		docker start $CONTAINER-$TARGET
+	fi
+done
 
 USER=$(ls -l --numeric-uid-gid --directory . | sed 's/ \+/ /g' | cut --delimiter " " --fields 3)
 
-echo "Building recording backend packages for Debian 11"
-docker exec --tty --interactive --user $USER --workdir /nextcloud-talk-recording/packaging $CONTAINER-debian11 make
-
-echo "Building recording backend packages for Ubuntu 20.04"
-docker exec --tty --interactive --user $USER --workdir /nextcloud-talk-recording/packaging $CONTAINER-ubuntu20.04 make
-
-echo "Building recording backend packages for Ubuntu 22.04"
-docker exec --tty --interactive --user $USER --workdir /nextcloud-talk-recording/packaging $CONTAINER-ubuntu22.04 make
+for TARGET in $TARGETS; do
+	echo "Building recording backend packages for ${TARGET_NAMES[$TARGET]}"
+	docker exec --tty --interactive --user $USER --workdir /nextcloud-talk-recording/packaging $CONTAINER-$TARGET make
+done
