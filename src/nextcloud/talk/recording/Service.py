@@ -10,6 +10,7 @@ Module to start and stop the recording for a specific call.
 import logging
 import os
 import subprocess
+import time
 from datetime import datetime
 from secrets import token_urlsafe
 from threading import Event, Thread
@@ -135,6 +136,9 @@ class Service:
         self._process = None
         self._fileName = None
 
+        self._recordingTimeStart = 0
+        self._recordingTimeStop = 0
+
     def __del__(self):
         self._stopHelpers()
 
@@ -228,6 +232,8 @@ class Service:
                 # automatically fail, but just in case.
                 raise Exception("Call joined after recording was stopped")
 
+            self._recordingTimeStart = time.monotonic()
+
             returnCode = self._process.wait()
 
             # recorder process will be explicitly terminated when needed, which
@@ -288,6 +294,8 @@ class Service:
         os.remove(self._fileName)
 
     def _stopHelpers(self):
+        self._recordingTimeStop = time.monotonic()
+
         if self._process:
             self._logger.debug("Stopping recorder")
             try:
@@ -325,3 +333,22 @@ class Service:
                 self._logger.exception("Error when stopping display")
             finally:
                 self._display = None
+
+    def getRecordingDuration(self):
+        """
+        Returns the duration of the recording in seconds.
+
+        The duration is calculated from the start and stop of the service itself
+        and not directly from the file of the recording, so there might be a
+        small difference with the actual duration of the file.
+
+        :return: The duration of the recording in seconds.
+        """
+
+        if self._recordingTimeStart == 0:
+            return 0
+
+        if self._recordingTimeStop == 0:
+            return round(time.monotonic() - self._recordingTimeStart)
+
+        return round(self._recordingTimeStop - self._recordingTimeStart)

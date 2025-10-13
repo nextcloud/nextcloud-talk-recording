@@ -13,6 +13,26 @@ Only clients connecting from an IP that is included in the `allowed_ips` value o
 The following metrics are available:
 
 | Metric                                            | Type      | Since     | Description                                                               | Labels                            |
-| :------------------------------------------------ | :-------- | --------: | :------------------------------------------------------------------------ | :-------------------------------- |
-| `recording_recordings_current`                    | Gauge     | 1.0.0     | The current number of recordings                                          | `backend`                         |
-| `recording_recordings_total`                      | Counter   | 1.0.0     | The total number of recordings                                            | `backend`                         |
+| :------------------------------------------------ | :-------- | --------: | :----------------------------------------------------------------------------------------------------- | :-------------------------------- |
+| `recording_recordings_current`                    | Gauge     | 1.0.0     | The current number of recordings                                                                       | `backend`                         |
+| `recording_recordings_failed_total`               | Counter   | 1.0.0     | The total number of failed recordings, see [notes](#recording_recordings_failed_total)                 | `backend`                         |
+| `recording_recordings_uploads_failed_total`       | Counter   | 1.0.0     | The total number of failed uploads, see [notes](#recording_recordings_uploads_failed_total)            | `backend`                         |
+| `recording_recordings_total`                      | Counter   | 1.0.0     | The total number of recordings                                                                         | `backend`                         |
+| `recording_recordings_duration_seconds`           | Counter   | 1.0.0     | The total duration of all recordings, see [notes](#recording_recordings_duration_seconds)              | `backend`                         |
+
+### Notes
+
+#### `recording_recordings_failed_total`
+
+- Recordings that were successful but that failed to be uploaded are not included. That is, `recording_recordings_failed_total` and `recording_recordings_uploads_failed_total` have no elements in common.
+
+#### `recording_recordings_uploads_failed_total`
+
+- Recordings that were already in the temporary directory when the recording server was started are not included. That is, the value always starts at 0 when the recording server is started, even if in the temporary directory there are recordings that failed to be uploaded in a previous execution.
+- An alert can be set whenever the value changes to know that there is a recording file that could not be uploaded and will need manual handling.
+
+#### `recording_recordings_duration_seconds`
+
+- The value is increased once a recording finishes, but it is not updated during the recording itself.
+- Failed recordings are not taken into account. However, successful recordings that could not be uploaded are.
+- The reported duration might have a difference of a few seconds with the actual duration of the recordings.
