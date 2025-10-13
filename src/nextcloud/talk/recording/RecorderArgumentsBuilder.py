@@ -43,8 +43,8 @@ class RecorderArgumentsBuilder:
         """
 
         ffmpegCommon = self.getFfmpegCommon()
-        ffmpegInputAudio = ['-f', 'pulse', '-i', audioSourceIndex]
-        ffmpegInputVideo = ['-f', 'x11grab', '-draw_mouse', '0', '-video_size', f'{width}x{height}', '-i', displayId]
+        ffmpegInputAudio = self.getFfmpegInputAudio(audioSourceIndex)
+        ffmpegInputVideo = self.getFfmpegInputVideo(width, height, displayId)
         ffmpegOutputAudio = self.getFfmpegOutputAudio()
         ffmpegOutputVideo = self.getFfmpegOutputVideo()
 
@@ -74,6 +74,18 @@ class RecorderArgumentsBuilder:
             return self._ffmpegCommon
 
         return config.getFfmpegCommon()
+
+    def getFfmpegInputAudio(self, audioSourceIndex):
+        """
+        Returns the options given to ffmpeg for the audio input.
+        """
+        return ['-f', 'pulse', '-i', audioSourceIndex]
+
+    def getFfmpegInputVideo(self, width, height, displayId):
+        """
+        Returns the options given to ffmpeg for the video input.
+        """
+        return ['-f', 'x11grab', '-draw_mouse', '0', '-video_size', f'{width}x{height}', '-i', displayId]
 
     def getFfmpegOutputAudio(self):
         """
