@@ -11,6 +11,7 @@ import argparse
 import atexit
 import logging
 import os
+import re
 import subprocess
 from threading import Event, Thread
 from time import sleep, time
@@ -113,6 +114,8 @@ class BenchmarkService:
         self._playerProcess = None
         self._recorderProcess = None
 
+        self._droppedFrames = None
+
         self._recorderArguments = None
         self._averageCpuPercents = None
         self._averageMemoryInfos = None
@@ -161,8 +164,8 @@ class BenchmarkService:
             # pylint: disable=consider-using-with
             self._playerProcess = subprocess.Popen(playerArgs, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=env)
 
-            # Log player output.
-            Thread(target=processLog, args=["player", self._playerProcess.stdout, logging.DEBUG], daemon=True).start()
+            # Log player output and track dropped frames.
+            Thread(target=self._handleFfplayOutput, args=[self._playerProcess.stdout], daemon=True).start()
 
             extensionlessFileName, extension = args.output.rsplit(".", 1)
 
@@ -227,6 +230,12 @@ class BenchmarkService:
                 self._averageMemoryPercents += memoryPercents
             self._averageMemoryPercents /= len(self._resourcesTracker.memoryPercents)
 
+    def getDroppedFrames(self):
+        """
+        Returns the dropped frames parsed from ffplay output.
+        """
+        return self._droppedFrames
+
     def getRecorderArguments(self):
         """
         Returns the arguments used to start the recorder process.
@@ -260,6 +269,28 @@ class BenchmarkService:
         The value is available only once the recorder process has finished.
         """
         return self._averageMemoryPercents
+
+    def _handleFfplayOutput(self, ffplayOutput):
+        """
+        Logs the ffplay output and tracks the dropped frames.
+
+        ffplay output is logged with the "player" logger with DEBUG level.
+
+        :param ffplayOutput: TextIOWrapper with ffplay output.
+        """
+        logger = logging.getLogger("player")
+
+        ffplayFdRegExp = re.compile("fd=\\s*(\\d+)")
+
+        with ffplayOutput:
+            for line in ffplayOutput:
+                # Lines captured from the player have a trailing new line, so it
+                # needs to be removed.
+                logger.log(logging.DEBUG, line.rstrip('\n'))
+
+                fdMatch = ffplayFdRegExp.search(line)
+                if fdMatch:
+                    self._droppedFrames = fdMatch.group(1)
 
     def _stopHelpers(self):
         if self._recorderProcess:
@@ -339,7 +370,12 @@ def main():
     benchmarkService.run(args)
 
     output = benchmarkService.getRecorderArguments()[-1]
-    print(f"Recorder args: {' '.join(benchmarkService.getRecorderArguments())}")
+    if benchmarkService.getDroppedFrames() is None:
+        droppedFrames = "ffplay output could not be parsed"
+    else:
+        droppedFrames = benchmarkService.getDroppedFrames()
+    print(f"Player dropped frames: {droppedFrames}")
+    print(f"Recorder arguments: {' '.join(benchmarkService.getRecorderArguments())}")
     print(f"File size: {os.stat(output).st_size}")
     print(f"Average CPU percents: {benchmarkService.getAverageCpuPercents()}")
     print(f"Average memory infos: {benchmarkService.getAverageMemoryInfos()}")

@@ -18,6 +18,8 @@ A benchmark tool is provided to check the resources used by the recorder process
 
 The benchmark tool does not record an actual call; it plays a video file and records its audio and video (or, optionally, only its audio). This makes it possible to easily compare the quality between different configurations, as they can be generated from the same input. There is no default input file, though; a specific file must be provided.
 
+Note that playing a video file may cause a CPU usage even higher than rendering an actual call, so both the player and the recorder may "compete" for the CPU. When the benchmark ends the number of frames dropped by the player is printed; if it is higher than 0 the benchmark result may not be fully representative, as the CPU usage of the recorder could have been limited by the player, and if it is relatively high compared to the full number of frames in the video the output quality may not be representative either, as the output video may not be smooth due to how the video was played and not due to how it was encoded.
+
 ### Usage example
 
 The different options accepted by the benchmark tool can be seen with `nextcloud-talk-recording-benchmark --help` (or, if the helper script is not available, directly with `python3 -m nextcloud.talk.recording.Benchmark --help`).
