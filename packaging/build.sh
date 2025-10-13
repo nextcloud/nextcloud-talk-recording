@@ -140,7 +140,7 @@ if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-debian11$")" ]; t
 	# "noninteractive" is used to provide default settings instead of asking for
 	# them (for example, for tzdata).
 	docker exec $CONTAINER-debian11 bash -c "apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install --assume-yes make python3 python3-pip python3-venv python3-all debhelper dh-python git dh-exec"
-	docker exec $CONTAINER-debian11 bash -c "python3 -m pip install stdeb build 'setuptools >= 61.0'"
+	docker exec $CONTAINER-debian11 bash -c "python3 -m pip install 'stdeb < 0.11.0' build 'setuptools >= 61.0'"
 fi
 if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-ubuntu20.04$")" ]; then
 	echo "Creating Nextcloud Talk recording packages builder container for Ubuntu 20.04"
@@ -150,7 +150,7 @@ if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-ubuntu20.04$")" ]
 	# "noninteractive" is used to provide default settings instead of asking for
 	# them (for example, for tzdata).
 	docker exec $CONTAINER-ubuntu20.04 bash -c "apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install --assume-yes make python3 python3-pip python3-venv python3-all debhelper dh-python git dh-exec"
-	docker exec $CONTAINER-ubuntu20.04 bash -c "python3 -m pip install stdeb build 'setuptools >= 61.0'"
+	docker exec $CONTAINER-ubuntu20.04 bash -c "python3 -m pip install 'stdeb < 0.11.0' build 'setuptools >= 61.0'"
 fi
 if [ -z "$(docker ps --all --quiet --filter name="^/$CONTAINER-ubuntu22.04$")" ]; then
 	echo "Creating Nextcloud Talk recording packages builder container for Ubuntu 22.04"
