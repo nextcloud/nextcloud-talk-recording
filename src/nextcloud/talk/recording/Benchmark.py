@@ -79,7 +79,7 @@ class ResourcesTracker:
             self.cpuPercents.append(cpuPercent)
 
             memoryInfo = process.memory_info()
-            self.logger.info("Memory info: %f", memoryInfo)
+            self.logger.info("Memory info: %s", memoryInfo)
             self.memoryInfos.append(memoryInfo)
 
             memoryPercent = process.memory_percent()
