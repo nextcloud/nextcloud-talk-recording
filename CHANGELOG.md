@@ -5,6 +5,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.2.1] - 2025-11-13
+### Fixed
+
+- Fix minimum required version of Selenium [#67](https://github.com/nextcloud/nextcloud-talk-recording/pull/67)
+- Fix issues in packages of Selenium and requests introduced in 0.2.0 [#66](https://github.com/nextcloud/nextcloud-talk-recording/pull/66) [#69](https://github.com/nextcloud/nextcloud-talk-recording/pull/69)
+
 ## [0.2.0] - 2025-10-13
 ### Added
 
