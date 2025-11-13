@@ -128,6 +128,10 @@ $(BUILD_DIR)/deb/python3-selenium_$(SELENIUM_VERSION)-$(DEBIAN_VERSION)_all.deb:
 	# appended rather than just copied.
 	cat selenium/MANIFEST.in >> $(BUILD_DIR)/selenium-$(SELENIUM_VERSION)/MANIFEST.in
 
+	# The source Python package includes a pre-built Selenium manager, but
+	# without execute permissions, so they need to be explicitly set.
+	chmod a+x $(BUILD_DIR)/selenium-$(SELENIUM_VERSION)/selenium/webdriver/common/linux/selenium-manager
+
 	$(call build-deb-package,selenium,$(SELENIUM_VERSION),$$($(call timestamp-from-source-python-package,../selenium-$(SELENIUM_VERSION).tar.gz)))
 
 	$(call copy-binary-deb-package,selenium,$(SELENIUM_VERSION),python3-selenium)
