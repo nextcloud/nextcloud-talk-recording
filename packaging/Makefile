@@ -91,9 +91,8 @@ $(BUILD_DIR)/deb/nextcloud-talk-recording_$(NEXTCLOUD_TALK_RECORDING_VERSION)-$(
 # - Ubuntu 20.04 (focal): pulsectl, pyvirtualdisplay >= 2.0, requests >= 2.25, selenium >= 4.11.0
 # - Ubuntu 22.04 (jammy): pulsectl, selenium >= 4.11.0
 #
-# requests is not an explicit dependency, but required by requests-toolbelt.
-# However, requests < 2.25 is not compatible with urllib3 >= 1.26, which is
-# required by selenium.
+# requests < 2.25 is not compatible with urllib3 >= 1.26, which is required by
+# selenium.
 build-packages-deb-nextcloud-talk-recording-dependencies: build-packages-deb-nextcloud-talk-recording-dependencies-$(OS_VERSION)
 
 build-packages-deb-nextcloud-talk-recording-dependencies-debian11: build-packages-deb-pulsectl build-packages-deb-pyvirtualdisplay build-packages-deb-selenium build-packages-deb-selenium-dependencies
