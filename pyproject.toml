@@ -17,7 +17,7 @@ dependencies = [
     "pulsectl",
     "pyvirtualdisplay>=2.0",
     "requests-toolbelt",
-    "selenium>=4.6.0",
+    "selenium>=4.11.0",
     "websocket-client",
 ]
 dynamic = ["version"]

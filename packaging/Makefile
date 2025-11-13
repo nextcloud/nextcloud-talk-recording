@@ -87,9 +87,9 @@ $(BUILD_DIR)/deb/nextcloud-talk-recording_$(NEXTCLOUD_TALK_RECORDING_VERSION)-$(
 
 # Builds the Python dependencies that are not included in at least one of the
 # Ubuntu supported releases:
-# - Debian 11 (bullseye): pulsectl, pyvirtualdisplay >= 2.0, selenium >= 4.6.0
-# - Ubuntu 20.04 (focal): pulsectl, pyvirtualdisplay >= 2.0, requests >= 2.25, selenium >= 4.6.0
-# - Ubuntu 22.04 (jammy): pulsectl, selenium >= 4.6.0
+# - Debian 11 (bullseye): pulsectl, pyvirtualdisplay >= 2.0, selenium >= 4.11.0
+# - Ubuntu 20.04 (focal): pulsectl, pyvirtualdisplay >= 2.0, requests >= 2.25, selenium >= 4.11.0
+# - Ubuntu 22.04 (jammy): pulsectl, selenium >= 4.11.0
 #
 # requests is not an explicit dependency, but required by requests-toolbelt.
 # However, requests < 2.25 is not compatible with urllib3 >= 1.26, which is
