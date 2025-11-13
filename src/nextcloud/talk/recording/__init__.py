@@ -11,7 +11,7 @@
 Module to initialize the package.
 """
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 
 RECORDING_STATUS_AUDIO_AND_VIDEO = 1
 RECORDING_STATUS_AUDIO_ONLY = 2
