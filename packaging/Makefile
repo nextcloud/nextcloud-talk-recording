@@ -16,6 +16,8 @@ PYVIRTUALDISPLAY_VERSION := 3.0
 REQUESTS_VERSION := 2.32.0
 SELENIUM_VERSION := 4.14.0
 
+CHARSET_NORMALIZER_VERSION := 3.4.4
+
 CERTIFI_VERSION := 2024.7.4
 TRIO_VERSION := 0.21.0
 TRIO_WEBSOCKET_VERSION := 0.9.2
@@ -96,7 +98,7 @@ $(BUILD_DIR)/deb/nextcloud-talk-recording_$(NEXTCLOUD_TALK_RECORDING_VERSION)-$(
 build-packages-deb-nextcloud-talk-recording-dependencies: build-packages-deb-nextcloud-talk-recording-dependencies-$(OS_VERSION)
 
 build-packages-deb-nextcloud-talk-recording-dependencies-debian11: build-packages-deb-pulsectl build-packages-deb-pyvirtualdisplay build-packages-deb-selenium build-packages-deb-selenium-dependencies
-build-packages-deb-nextcloud-talk-recording-dependencies-ubuntu20.04: build-packages-deb-pulsectl build-packages-deb-pyvirtualdisplay build-packages-deb-requests build-packages-deb-selenium build-packages-deb-selenium-dependencies
+build-packages-deb-nextcloud-talk-recording-dependencies-ubuntu20.04: build-packages-deb-pulsectl build-packages-deb-pyvirtualdisplay build-packages-deb-requests build-packages-deb-requests-dependencies build-packages-deb-selenium build-packages-deb-selenium-dependencies
 build-packages-deb-nextcloud-talk-recording-dependencies-ubuntu22.04: build-packages-deb-pulsectl build-packages-deb-selenium build-packages-deb-selenium-dependencies
 
 build-packages-deb-pulsectl: $(BUILD_DIR)/deb/python3-pulsectl_$(PULSECTL_VERSION)-$(DEBIAN_VERSION)_all.deb
@@ -109,7 +111,37 @@ $(BUILD_DIR)/deb/python3-pyvirtualdisplay_$(PYVIRTUALDISPLAY_VERSION)-$(DEBIAN_V
 
 build-packages-deb-requests: $(BUILD_DIR)/deb/python3-requests_$(REQUESTS_VERSION)-$(DEBIAN_VERSION)_all.deb
 $(BUILD_DIR)/deb/python3-requests_$(REQUESTS_VERSION)-$(DEBIAN_VERSION)_all.deb: | $(BUILD_DIR)/deb
-	$(call build-deb-python-package-full,requests,$(REQUESTS_VERSION),requests)
+	$(call download-source-python-package,requests,$(REQUESTS_VERSION))
+
+	$(call extract-source-python-package,requests,$(REQUESTS_VERSION))
+
+	# The Python dependencies are added automatically to the .deb
+	# dependencies, but they do not include those for which a package does
+	# not exist, like "charset_normalizer". Due to that
+	# "debian/py3dist-overrides" is used to explicitly set the dependencies.
+	cp --recursive requests/debian $(BUILD_DIR)/requests-$(REQUESTS_VERSION)/
+	# The package provides its own MANIFEST.in, so the contents need to be
+	# appended rather than just copied.
+	cat requests/MANIFEST.in >> $(BUILD_DIR)/requests-$(REQUESTS_VERSION)/MANIFEST.in
+
+	$(call build-deb-package,requests,$(REQUESTS_VERSION),$$($(call timestamp-from-source-python-package,../requests-$(REQUESTS_VERSION).tar.gz)))
+
+	$(call copy-binary-deb-package,requests,$(REQUESTS_VERSION),python3-requests)
+
+# Builds the Python dependencies that are not included in at least one of the
+# Ubuntu supported releases:
+# - Debian 11 (bullseye): unneeded, uses requests package from distribution
+# - Ubuntu 20.04 (focal): charset-normalizer >= 2, < 4
+# - Ubuntu 22.04 (jammy): unneeded, uses requests package from distribution
+build-packages-deb-requests-dependencies: build-packages-deb-requests-dependencies-$(OS_VERSION)
+
+build-packages-deb-requests-dependencies-debian11:
+build-packages-deb-requests-dependencies-ubuntu20.04: build-packages-deb-charset-normalizer
+build-packages-deb-requests-dependencies-ubuntu22.04:
+
+build-packages-deb-charset-normalizer: $(BUILD_DIR)/deb/python3-charset-normalizer_$(CHARSET_NORMALIZER_VERSION)-$(DEBIAN_VERSION)_all.deb
+$(BUILD_DIR)/deb/python3-charset-normalizer_$(CHARSET_NORMALIZER_VERSION)-$(DEBIAN_VERSION)_all.deb: | $(BUILD_DIR)/deb
+	$(call build-deb-python-package-full,charset_normalizer,$(CHARSET_NORMALIZER_VERSION),charset-normalizer)
 
 build-packages-deb-selenium: $(BUILD_DIR)/deb/python3-selenium_$(SELENIUM_VERSION)-$(DEBIAN_VERSION)_all.deb
 $(BUILD_DIR)/deb/python3-selenium_$(SELENIUM_VERSION)-$(DEBIAN_VERSION)_all.deb: | $(BUILD_DIR)/deb
