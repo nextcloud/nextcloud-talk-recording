@@ -13,3 +13,5 @@ updates:
     day: saturday
     time: "03:00"
     timezone: Europe/Berlin
+  cooldown:
+    default-days: 7
