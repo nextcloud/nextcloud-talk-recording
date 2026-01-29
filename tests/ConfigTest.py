@@ -296,6 +296,9 @@ directory = /srv/recording
         signalingUrl = 'https://signaling.unknown.com'
         assert configLoadedFromString.getSignalingSecret(signalingUrl) is None
 
+        signalingUrl = 'wss://signaling.unknown.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) is None
+
     def testGetSignalingSecretWhenSet(self, configLoadedFromString):
         configLoadedFromString.configString = """
 [signaling]
@@ -311,6 +314,12 @@ url = https://signaling.server.com
         assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret-common'
 
         signalingUrl = 'https://signaling.server.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret-common'
+
+        signalingUrl = 'wss://signaling.unknown.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret-common'
+
+        signalingUrl = 'wss://signaling.server.com'
         assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret-common'
 
     def testGetSignalingSecretWhenSetBySignaling(self, configLoadedFromString):
@@ -330,7 +339,16 @@ internalsecret = the-internal-secret
         signalingUrl = 'https://signaling.server.com'
         assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret'
 
+        signalingUrl = 'wss://signaling.unknown.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) is None
+
+        signalingUrl = 'wss://signaling.server.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret'
+
         signalingUrl = 'http://signaling.server.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) is None
+
+        signalingUrl = 'ws://signaling.server.com'
         assert configLoadedFromString.getSignalingSecret(signalingUrl) is None
 
     def testGetSignalingSecretWhenSetBySignalingAsPlainHttp(self, configLoadedFromString):
@@ -350,14 +368,81 @@ internalsecret = the-internal-secret
         signalingUrl = 'http://signaling.server.com'
         assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret'
 
+        signalingUrl = 'ws://signaling.unknown.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) is None
+
+        signalingUrl = 'ws://signaling.server.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret'
+
         signalingUrl = 'https://signaling.server.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) is None
+
+        signalingUrl = 'wss://signaling.server.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) is None
+
+    def testGetSignalingSecretWhenSetBySignalingAsWebSocket(self, configLoadedFromString):
+        configLoadedFromString.configString = """
+[signaling]
+signalings = signaling1
+
+[signaling1]
+url = wss://signaling.server.com
+internalsecret = the-internal-secret
+"""
+        configLoadedFromString.load('fake-file-name')
+
+        signalingUrl = 'https://signaling.unknown.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) is None
+
+        signalingUrl = 'https://signaling.server.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret'
+
+        signalingUrl = 'wss://signaling.unknown.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) is None
+
+        signalingUrl = 'wss://signaling.server.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret'
+
+        signalingUrl = 'http://signaling.server.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) is None
+
+        signalingUrl = 'ws://signaling.server.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) is None
+
+    def testGetSignalingSecretWhenSetBySignalingAsPlainWebSocket(self, configLoadedFromString):
+        configLoadedFromString.configString = """
+[signaling]
+signalings = signaling1
+
+[signaling1]
+url = ws://signaling.server.com
+internalsecret = the-internal-secret
+"""
+        configLoadedFromString.load('fake-file-name')
+
+        signalingUrl = 'http://signaling.unknown.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) is None
+
+        signalingUrl = 'http://signaling.server.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret'
+
+        signalingUrl = 'ws://signaling.unknown.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) is None
+
+        signalingUrl = 'ws://signaling.server.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret'
+
+        signalingUrl = 'https://signaling.server.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) is None
+
+        signalingUrl = 'wss://signaling.server.com'
         assert configLoadedFromString.getSignalingSecret(signalingUrl) is None
 
     def testGetSignalingSecretWhenSeveralSignalings(self, configLoadedFromString):
         configLoadedFromString.configString = """
 [signaling]
 internalsecret = the-internal-secret-common
-signalings = signaling1, signaling2, signaling2-plain
+signalings = signaling1, signaling2, signaling2-plain, signaling3, signaling4, signaling4-plain
 
 [signaling1]
 url = https://signaling.server1.com
@@ -370,6 +455,18 @@ internalsecret = the-internal-secret2
 [signaling2-plain]
 url = http://signaling.server2.com
 internalsecret = the-internal-secret2-plain
+
+[signaling3]
+url = wss://signaling.server3.com
+internalsecret = the-internal-secret3
+
+[signaling4]
+url = wss://signaling.server4.com
+internalsecret = the-internal-secret4
+
+[signaling4-plain]
+url = ws://signaling.server4.com
+internalsecret = the-internal-secret4-plain
 """
         configLoadedFromString.load('fake-file-name')
 
@@ -384,6 +481,74 @@ internalsecret = the-internal-secret2-plain
 
         signalingUrl = 'http://signaling.server2.com'
         assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret2-plain'
+
+        signalingUrl = 'https://signaling.server3.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret3'
+
+        signalingUrl = 'https://signaling.server4.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret4'
+
+        signalingUrl = 'http://signaling.server4.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret4-plain'
+
+        signalingUrl = 'wss://signaling.unknown.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret-common'
+
+        signalingUrl = 'wss://signaling.server1.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret1'
+
+        signalingUrl = 'wss://signaling.server2.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret2'
+
+        signalingUrl = 'ws://signaling.server2.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret2-plain'
+
+        signalingUrl = 'wss://signaling.server3.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret3'
+
+        signalingUrl = 'wss://signaling.server4.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret4'
+
+        signalingUrl = 'ws://signaling.server4.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret4-plain'
+
+    def testGetSignalingSecretWhenSetBySignalingBothAsHttpsAndWebSocket(self, configLoadedFromString):
+        configLoadedFromString.configString = """
+[signaling]
+signalings = signaling1, signaling1-wss, signaling2-wss, signaling2
+
+[signaling1]
+url = https://signaling.server1.com
+internalsecret = the-internal-secret1
+
+[signaling1-wss]
+url = wss://signaling.server1.com
+internalsecret = the-internal-secret1-wss
+
+[signaling2-wss]
+url = wss://signaling.server2.com
+internalsecret = the-internal-secret2-wss
+
+[signaling2]
+url = https://signaling.server2.com
+internalsecret = the-internal-secret2
+"""
+        configLoadedFromString.load('fake-file-name')
+
+        # When set with both HTTPS and WSS the signaling server is treated as a
+        # duplicate and the last secret set is used.
+
+        signalingUrl = 'https://signaling.server1.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret1-wss'
+
+        signalingUrl = 'https://signaling.server2.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret2'
+
+        signalingUrl = 'wss://signaling.server1.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret1-wss'
+
+        signalingUrl = 'wss://signaling.server2.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret2'
 
     def testGetStatsAllowedIps(self, configLoadedFromString):
         configLoadedFromString.configString = """

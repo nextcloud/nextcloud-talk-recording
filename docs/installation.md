@@ -222,7 +222,7 @@ Note that in some cases the error `Unable to obtain driver for firefox/chrome` m
 
 This error will be logged when a recording was started, but the recording server is unable to determine the secret for the signaling server. In this case:
 - Verify that the `url` parameter of the signaling configuration is correct
-- Check that you are using the same URL scheme (`https://` vs. `wss://`) for the signaling server in your Nextcloud instance and the recording server
+- In version 0.2.1 and older, check that you are using the same URL scheme (`https://` vs. `wss://`) for the signaling server in your Nextcloud instance and the recording server
 
 ### The recording is stuck in _Starting_ but never starts nor fails
 
