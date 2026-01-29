@@ -128,6 +128,9 @@ class Config:
                 continue
 
             signalingUrl = self._configParser[signalingId]['url'].rstrip('/')
+            if signalingUrl.startswith('https://'):
+                signalingUrl = 'wss://' + signalingUrl[len('https://'):]
+
             self._signalingIdsBySignalingUrl[signalingUrl] = signalingId
 
     def _loadStatsAllowedIps(self):
@@ -250,9 +253,14 @@ class Config:
         Returns the shared secret for authenticating as an internal client of
         signaling servers.
 
+        URLs starting with https:// and wss:// are treated as equivalent.
+
         Defaults to None.
         """
         signalingUrl = signalingUrl.rstrip('/')
+        if signalingUrl not in self._signalingIdsBySignalingUrl and signalingUrl.startswith('https://'):
+            signalingUrl = 'wss://' + signalingUrl[len('https://'):]
+
         if signalingUrl in self._signalingIdsBySignalingUrl:
             signalingId = self._signalingIdsBySignalingUrl[signalingUrl]
 
