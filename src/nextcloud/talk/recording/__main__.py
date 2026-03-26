@@ -13,6 +13,7 @@ Module to provide the command line interface for the recorder.
 
 import argparse
 import logging
+from urllib.parse import urlparse
 
 from nextcloud.talk import recording
 from .Config import config
@@ -38,7 +39,9 @@ def main():
     logging.getLogger('werkzeug').setLevel(config.getLogLevel())
 
     listen = config.getListen()
-    host, port = listen.split(':')
+    parsed = urlparse(f'//{listen}')
+    host = parsed.hostname
+    port = parsed.port
 
     app.run(host, port, threaded=True)
 
