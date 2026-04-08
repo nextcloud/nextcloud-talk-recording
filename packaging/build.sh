@@ -215,7 +215,7 @@ for TARGET in $TARGETS; do
 	fi
 done
 
-USER=$(ls -l --numeric-uid-gid --directory . | sed 's/ \+/ /g' | cut --delimiter " " --fields 3)
+USER=$(ls --long --numeric-uid-gid --directory . | sed 's/ \+/ /g' | cut --delimiter " " --fields 3)
 
 for TARGET in $TARGETS; do
 	echo "Building recording backend packages for ${TARGET_NAMES[$TARGET]}"
