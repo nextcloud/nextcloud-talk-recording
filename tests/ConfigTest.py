@@ -330,11 +330,34 @@ internalsecret = the-internal-secret
         signalingUrl = 'https://signaling.server.com'
         assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret'
 
+        signalingUrl = 'http://signaling.server.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) is None
+
+    def testGetSignalingSecretWhenSetBySignalingAsPlainHttp(self, configLoadedFromString):
+        configLoadedFromString.configString = """
+[signaling]
+signalings = signaling1
+
+[signaling1]
+url = http://signaling.server.com
+internalsecret = the-internal-secret
+"""
+        configLoadedFromString.load('fake-file-name')
+
+        signalingUrl = 'http://signaling.unknown.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) is None
+
+        signalingUrl = 'http://signaling.server.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret'
+
+        signalingUrl = 'https://signaling.server.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) is None
+
     def testGetSignalingSecretWhenSeveralSignalings(self, configLoadedFromString):
         configLoadedFromString.configString = """
 [signaling]
 internalsecret = the-internal-secret-common
-signalings = signaling1, signaling2
+signalings = signaling1, signaling2, signaling2-plain
 
 [signaling1]
 url = https://signaling.server1.com
@@ -343,6 +366,10 @@ internalsecret = the-internal-secret1
 [signaling2]
 url = https://signaling.server2.com
 internalsecret = the-internal-secret2
+
+[signaling2-plain]
+url = http://signaling.server2.com
+internalsecret = the-internal-secret2-plain
 """
         configLoadedFromString.load('fake-file-name')
 
@@ -354,6 +381,9 @@ internalsecret = the-internal-secret2
 
         signalingUrl = 'https://signaling.server2.com'
         assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret2'
+
+        signalingUrl = 'http://signaling.server2.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret2-plain'
 
     def testGetStatsAllowedIps(self, configLoadedFromString):
         configLoadedFromString.configString = """
