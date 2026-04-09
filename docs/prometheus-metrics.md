@@ -28,6 +28,18 @@ Although conceptually some metrics should be integers instead of floats (like `r
 
 Nevertheless, nowadays the original Prometheus format is legacy and the newer OpenMetrics format (which was derived from Prometheus) is the official one. The OpenMetrics format explicitly supports either float or integer values, but it also states that [ingestors may only support floats](https://github.com/prometheus/OpenMetrics/blob/6c847344ff49fa6241a35e8b4f65bf098da5a161/specification/OpenMetrics.txt#L240-L242). Therefore it might be just a matter of time until integers are also provided by the Python library, although it seems that it has not happened yet, probably to ensure backwards compatibility with older ingestors.
 
+#### `_created`
+
+The `_created` metrics are not explicitly added by the recording server. They are a [Prometheus / OpenMetrics convention](https://prometheus.io/docs/specs/om/open_metrics_spec/#counter) and added by default by the official Python client for Prometheus.
+
+[Since version 0.14 of of the client](https://github.com/prometheus/client_python/releases/tag/v0.14.0) the `_created` metrics [can be disabled with the environment variable `PROMETHEUS_DISABLE_CREATED_SERIES=True`](https://prometheus.github.io/client_python/instrumenting/#disabling-_created-metrics). If a systemd service is used to manage the recording server the environment variable could be set by calling `systemctl edit nextcloud-talk-recording` and adding:
+```
+[Service]
+Environment="PROMETHEUS_DISABLE_CREATED_SERIES=True"
+```
+
+Unfortunately the system packages for the client (`python3-prometheus-client`) provided by Ubuntu 20.04, Ubuntu 22.04 and Debian 11 are older than version 0.14, so the `_created` metrics can not be disabled when using them.
+
 #### `recording_recordings_failed_total`
 
 - Recordings that were successful but that failed to be uploaded are not included. That is, `recording_recordings_failed_total` and `recording_recordings_uploads_failed_total` have no elements in common.
