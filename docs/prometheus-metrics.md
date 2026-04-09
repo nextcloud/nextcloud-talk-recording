@@ -18,7 +18,7 @@ The following metrics are available:
 | `recording_recordings_failed_total`               | Counter   | 0.2.0     | The total number of failed recordings, see [notes](#recording_recordings_failed_total)                 | `backend`                         |
 | `recording_recordings_uploads_failed_total`       | Counter   | 0.2.0     | The total number of failed uploads, see [notes](#recording_recordings_uploads_failed_total)            | `backend`                         |
 | `recording_recordings_total`                      | Counter   | 0.2.0     | The total number of recordings                                                                         | `backend`                         |
-| `recording_recordings_duration_seconds`           | Counter   | 0.2.0     | The total duration of all recordings, see [notes](#recording_recordings_duration_seconds)              | `backend`                         |
+| `recording_recordings_duration_seconds_total`     | Counter   | 0.2.0     | The total duration of all recordings, see [notes](#recording_recordings_duration_seconds_total)        | `backend`                         |
 
 ### Notes
 
@@ -31,7 +31,7 @@ The following metrics are available:
 - Recordings that were already in the temporary directory when the recording server was started are not included. That is, the value always starts at 0 when the recording server is started, even if in the temporary directory there are recordings that failed to be uploaded in a previous execution.
 - An alert can be set whenever the value changes to know that there is a recording file that could not be uploaded and will need manual handling.
 
-#### `recording_recordings_duration_seconds`
+#### `recording_recordings_duration_seconds_total`
 
 - The value is increased once a recording finishes, but it is not updated during the recording itself.
 - Failed recordings are not taken into account. However, successful recordings that could not be uploaded are.
