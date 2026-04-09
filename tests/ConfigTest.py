@@ -6,6 +6,7 @@
 # pylint: disable=missing-docstring
 
 from ipaddress import ip_network
+from unittest.mock import call
 
 import pytest
 
@@ -26,6 +27,12 @@ class ConfigTest:
         monkeypatch.setattr(config._configParser, 'read', mockRead)
 
         return config
+
+    @pytest.fixture
+    def loggerSpy(self, mocker, configLoadedFromString):
+        spy = mocker.spy(configLoadedFromString, '_logger')
+
+        return spy
 
     def testGetTrustedProxies(self, configLoadedFromString):
         configLoadedFromString.configString = """
@@ -281,6 +288,52 @@ directory = /srv/recording
 
         backendUrl = 'https://cloud.server2.com/'
         assert configLoadedFromString.getBackendSecret(backendUrl) == 'the-shared-secret2'
+        assert configLoadedFromString.getBackendSkipVerify(backendUrl) is False
+        assert configLoadedFromString.getBackendMaximumMessageSize(backendUrl) == 2048
+        assert configLoadedFromString.getBackendVideoWidth(backendUrl) == 1920
+        assert configLoadedFromString.getBackendVideoHeight(backendUrl) == 1080
+        assert configLoadedFromString.getBackendDirectory(backendUrl) == '/srv/recording'
+
+    def testGetBackendValuesWhenDuplicatedUrl(self, configLoadedFromString, loggerSpy):
+        configLoadedFromString.configString = """
+[backend]
+backends = last-section-but-first-backend, second-backend, third-backend, fourth-backend
+maxmessagesize = 2048
+
+[second-backend]
+url = https://cloud.server1.com/
+secret = the-shared-secret1-second
+maxmessagesize = 512
+videowidth = 960
+videoheight = 540
+
+[third-backend]
+url = https://cloud.server1.com
+secret = the-shared-secret1-third
+maxmessagesize = 1024
+directory = /var/tmp
+
+[fourth-backend]
+url = https://cloud.server1.com
+secret = the-shared-secret1-fourth
+directory = /srv/recording
+
+[last-section-but-first-backend]
+url = https://cloud.server1.com
+secret = the-shared-secret1-last-section-but-first
+videowidth = 480
+videoheight = 270
+"""
+        configLoadedFromString.load('fake-file-name')
+
+        assert loggerSpy.error.call_args_list == [
+            call('Duplicated backend URL (%s), backend "%s" will be ignored', 'https://cloud.server1.com', 'last-section-but-first-backend'),
+            call('Duplicated backend URL (%s), backend "%s" will be ignored', 'https://cloud.server1.com', 'second-backend'),
+            call('Duplicated backend URL (%s), backend "%s" will be ignored', 'https://cloud.server1.com', 'third-backend'),
+        ]
+
+        backendUrl = 'https://cloud.server1.com/'
+        assert configLoadedFromString.getBackendSecret(backendUrl) == 'the-shared-secret1-fourth'
         assert configLoadedFromString.getBackendSkipVerify(backendUrl) is False
         assert configLoadedFromString.getBackendMaximumMessageSize(backendUrl) == 2048
         assert configLoadedFromString.getBackendVideoWidth(backendUrl) == 1920
@@ -549,6 +602,56 @@ internalsecret = the-internal-secret2
 
         signalingUrl = 'wss://signaling.server2.com'
         assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret2'
+
+    def testGetSignalingSecretWhenDuplicatedUrl(self, configLoadedFromString, loggerSpy):
+        configLoadedFromString.configString = """
+[signaling]
+signalings = last-section-but-first-signaling, second-signaling, second-signaling-wss, third-signaling, fourth-signaling-http, fifth-signaling-ws
+
+[second-signaling]
+url = https://signaling.server1.com/
+internalsecret = the-internal-secret1-second
+
+[second-signaling-wss]
+url = wss://signaling.server1.com
+internalsecret = the-internal-secret1-second-wss
+
+[third-signaling]
+url = https://signaling.server1.com
+internalsecret = the-internal-secret1-third
+
+[fourth-signaling-http]
+url = http://signaling.server1.com
+internalsecret = the-internal-secret1-fourth-http
+
+[fifth-signaling-ws]
+url = ws://signaling.server1.com
+internalsecret = the-internal-secret1-fifth-ws
+
+[last-section-but-first-signaling]
+url = https://signaling.server1.com
+internalsecret = the-internal-secret1-last-section-but-first
+"""
+        configLoadedFromString.load('fake-file-name')
+
+        assert loggerSpy.error.call_args_list == [
+            call('Duplicated signaling URL (%s), signaling "%s" will be ignored', 'https://signaling.server1.com', 'last-section-but-first-signaling'),
+            call('Duplicated signaling URL (%s, equivalent to %s), signaling "%s" will be ignored', 'https://signaling.server1.com', 'wss://signaling.server1.com', 'second-signaling'),
+            call('Duplicated signaling URL (%s, equivalent to %s), signaling "%s" will be ignored', 'wss://signaling.server1.com', 'https://signaling.server1.com', 'second-signaling-wss'),
+            call('Duplicated signaling URL (%s, equivalent to %s), signaling "%s" will be ignored', 'http://signaling.server1.com', 'ws://signaling.server1.com', 'fourth-signaling-http'),
+        ]
+
+        signalingUrl = 'https://signaling.server1.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret1-third'
+
+        signalingUrl = 'wss://signaling.server1.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret1-third'
+
+        signalingUrl = 'http://signaling.server1.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret1-fifth-ws'
+
+        signalingUrl = 'ws://signaling.server1.com'
+        assert configLoadedFromString.getSignalingSecret(signalingUrl) == 'the-internal-secret1-fifth-ws'
 
     def testGetStatsAllowedIps(self, configLoadedFromString):
         configLoadedFromString.configString = """
