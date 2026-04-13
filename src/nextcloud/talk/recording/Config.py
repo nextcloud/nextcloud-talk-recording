@@ -99,6 +99,9 @@ class Config:
                 continue
 
             backendUrl = self._configParser[backendId]['url'].rstrip('/')
+            if backendUrl in self._backendIdsByBackendUrl:
+                self._logger.error("Duplicated backend URL (%s), backend \"%s\" will be ignored", backendUrl, self._backendIdsByBackendUrl[backendUrl])
+
             self._backendIdsByBackendUrl[backendUrl] = backendId
 
     def _loadSignalings(self):
@@ -132,6 +135,16 @@ class Config:
                 signalingUrl = 'wss://' + signalingUrl[len('https://'):]
             elif signalingUrl.startswith('http://'):
                 signalingUrl = 'ws://' + signalingUrl[len('http://'):]
+
+            if signalingUrl in self._signalingIdsBySignalingUrl:
+                previousSignalingId = self._signalingIdsBySignalingUrl[signalingUrl]
+                previousSignalingUrl = self._configParser[previousSignalingId]['url'].rstrip('/')
+                newSignalingUrl = self._configParser[signalingId]['url'].rstrip('/')
+
+                if previousSignalingUrl == newSignalingUrl:
+                    self._logger.error("Duplicated signaling URL (%s), signaling \"%s\" will be ignored", previousSignalingUrl, previousSignalingId)
+                else:
+                    self._logger.error("Duplicated signaling URL (%s, equivalent to %s), signaling \"%s\" will be ignored", previousSignalingUrl, newSignalingUrl, previousSignalingId)
 
             self._signalingIdsBySignalingUrl[signalingUrl] = signalingId
 
