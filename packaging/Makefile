@@ -184,7 +184,16 @@ $(BUILD_DIR)/deb/python3-certifi_$(CERTIFI_VERSION)-$(DEBIAN_VERSION)_all.deb: |
 
 build-packages-deb-trio: $(BUILD_DIR)/deb/python3-trio_$(TRIO_VERSION)-$(DEBIAN_VERSION)_all.deb
 $(BUILD_DIR)/deb/python3-trio_$(TRIO_VERSION)-$(DEBIAN_VERSION)_all.deb: | $(BUILD_DIR)/deb
+ifeq ($(OS_VERSION),debian11)
+	# Same as calling "build-deb-python-package-full", but constraining the
+	# dependencies to a version compatible with Debian 11.
+	PIP_CONSTRAINT="trio/pip-build-constraints-debian11.txt" python3 -m pip download --dest $(BUILD_DIR) --no-binary :all: --no-deps "trio == $(TRIO_VERSION)"
+	$(call extract-source-python-package,trio,$(TRIO_VERSION))
+	$(call build-deb-package,trio,$(TRIO_VERSION),$$($(call timestamp-from-source-python-package,../trio-$(TRIO_VERSION).tar.gz)))
+	$(call copy-binary-deb-package,trio,$(TRIO_VERSION),python3-trio)
+else
 	$(call build-deb-python-package-full,trio,$(TRIO_VERSION),trio)
+endif
 
 build-packages-deb-trio-websocket: $(BUILD_DIR)/deb/python3-trio-websocket_$(TRIO_WEBSOCKET_VERSION)-$(DEBIAN_VERSION)_all.deb
 $(BUILD_DIR)/deb/python3-trio-websocket_$(TRIO_WEBSOCKET_VERSION)-$(DEBIAN_VERSION)_all.deb: | $(BUILD_DIR)/deb
