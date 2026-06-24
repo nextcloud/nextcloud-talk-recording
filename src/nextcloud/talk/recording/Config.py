@@ -253,6 +253,15 @@ class Config:
         """
         return self._getBackendValue(backendUrl, 'directory', '/tmp')
 
+    def getBackendUploadChunkSize(self, backendUrl):
+        """
+        Returns the size in bytes of each chunk used when uploading a recording
+        to the backend with the chunked upload API.
+
+        Defaults to 10 MiB.
+        """
+        return int(self._getBackendValue(backendUrl, 'uploadchunksize', 10 * 1024 * 1024))
+
     def _getBackendValue(self, backendUrl, key, default):
         backendUrl = backendUrl.rstrip('/')
         if backendUrl in self._backendIdsByBackendUrl:

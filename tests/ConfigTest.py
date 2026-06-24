@@ -89,6 +89,7 @@ maxmessagesize = 512
 videowidth = 960
 videoheight = 540
 directory = /srv/recording
+uploadchunksize = 7864320
 
 [backend1]
 url = https://cloud.server.com
@@ -103,6 +104,7 @@ secret = the-shared-secret
         assert configLoadedFromString.getBackendVideoWidth(backendUrl) == 960
         assert configLoadedFromString.getBackendVideoHeight(backendUrl) == 540
         assert configLoadedFromString.getBackendDirectory(backendUrl) == '/srv/recording'
+        assert configLoadedFromString.getBackendUploadChunkSize(backendUrl) == 7864320
 
         backendUrl = 'https://cloud.server.com/'
         assert configLoadedFromString.getBackendSecret(backendUrl) == 'the-shared-secret'
@@ -111,6 +113,7 @@ secret = the-shared-secret
         assert configLoadedFromString.getBackendVideoWidth(backendUrl) == 960
         assert configLoadedFromString.getBackendVideoHeight(backendUrl) == 540
         assert configLoadedFromString.getBackendDirectory(backendUrl) == '/srv/recording'
+        assert configLoadedFromString.getBackendUploadChunkSize(backendUrl) == 7864320
 
     def testGetBackendValuesWhenSetByBackend(self, configLoadedFromString):
         configLoadedFromString.configString = """
@@ -121,6 +124,7 @@ maxmessagesize = 256
 videowidth = 480
 videoheight = 270
 directory = /tmp/files
+uploadchunksize = 5242880
 
 [backend1]
 url = https://cloud.server.com
@@ -130,6 +134,7 @@ maxmessagesize = 512
 videowidth = 960
 videoheight = 540
 directory = /srv/recording
+uploadchunksize = 7864320
 """
         configLoadedFromString.load('fake-file-name')
 
@@ -140,6 +145,7 @@ directory = /srv/recording
         assert configLoadedFromString.getBackendVideoWidth(backendUrl) == 480
         assert configLoadedFromString.getBackendVideoHeight(backendUrl) == 270
         assert configLoadedFromString.getBackendDirectory(backendUrl) == '/tmp/files'
+        assert configLoadedFromString.getBackendUploadChunkSize(backendUrl) == 5242880
 
         backendUrl = 'https://cloud.server.com/'
         assert configLoadedFromString.getBackendSecret(backendUrl) == 'the-shared-secret'
@@ -148,6 +154,7 @@ directory = /srv/recording
         assert configLoadedFromString.getBackendVideoWidth(backendUrl) == 960
         assert configLoadedFromString.getBackendVideoHeight(backendUrl) == 540
         assert configLoadedFromString.getBackendDirectory(backendUrl) == '/srv/recording'
+        assert configLoadedFromString.getBackendUploadChunkSize(backendUrl) == 7864320
 
     def testGetBackendValuesWhenAllowingAll(self, configLoadedFromString):
         configLoadedFromString.configString = """
@@ -164,6 +171,7 @@ maxmessagesize = 512
 videowidth = 960
 videoheight = 540
 directory = /srv/recording
+uploadchunksize = 7864320
 """
         configLoadedFromString.load('fake-file-name')
 
@@ -174,6 +182,7 @@ directory = /srv/recording
         assert configLoadedFromString.getBackendVideoWidth(backendUrl) == 1920
         assert configLoadedFromString.getBackendVideoHeight(backendUrl) == 1080
         assert configLoadedFromString.getBackendDirectory(backendUrl) == '/tmp'
+        assert configLoadedFromString.getBackendUploadChunkSize(backendUrl) == 10485760
 
         backendUrl = 'https://cloud.server.com/'
         assert configLoadedFromString.getBackendSecret(backendUrl) == 'the-shared-secret-common'
@@ -182,6 +191,7 @@ directory = /srv/recording
         assert configLoadedFromString.getBackendVideoWidth(backendUrl) == 960
         assert configLoadedFromString.getBackendVideoHeight(backendUrl) == 540
         assert configLoadedFromString.getBackendDirectory(backendUrl) == '/srv/recording'
+        assert configLoadedFromString.getBackendUploadChunkSize(backendUrl) == 7864320
 
     def testGetBackendValuesWhenExplicitlyDisallowingAll(self, configLoadedFromString):
         configLoadedFromString.configString = """
@@ -198,6 +208,7 @@ maxmessagesize = 512
 videowidth = 960
 videoheight = 540
 directory = /srv/recording
+uploadchunksize = 7864320
 """
         configLoadedFromString.load('fake-file-name')
 
@@ -208,6 +219,7 @@ directory = /srv/recording
         assert configLoadedFromString.getBackendVideoWidth(backendUrl) == 1920
         assert configLoadedFromString.getBackendVideoHeight(backendUrl) == 1080
         assert configLoadedFromString.getBackendDirectory(backendUrl) == '/tmp'
+        assert configLoadedFromString.getBackendUploadChunkSize(backendUrl) == 10485760
 
         backendUrl = 'https://cloud.server.com/'
         assert configLoadedFromString.getBackendSecret(backendUrl) == 'the-shared-secret'
@@ -216,6 +228,7 @@ directory = /srv/recording
         assert configLoadedFromString.getBackendVideoWidth(backendUrl) == 960
         assert configLoadedFromString.getBackendVideoHeight(backendUrl) == 540
         assert configLoadedFromString.getBackendDirectory(backendUrl) == '/srv/recording'
+        assert configLoadedFromString.getBackendUploadChunkSize(backendUrl) == 7864320
 
     def testGetBackendValuesWhenExplicitlyDisallowingAllWithoutCommonSecret(self, configLoadedFromString):
         configLoadedFromString.configString = """
@@ -231,6 +244,7 @@ maxmessagesize = 512
 videowidth = 960
 videoheight = 540
 directory = /srv/recording
+uploadchunksize = 7864320
 """
         configLoadedFromString.load('fake-file-name')
 
@@ -241,6 +255,7 @@ directory = /srv/recording
         assert configLoadedFromString.getBackendVideoWidth(backendUrl) == 1920
         assert configLoadedFromString.getBackendVideoHeight(backendUrl) == 1080
         assert configLoadedFromString.getBackendDirectory(backendUrl) == '/tmp'
+        assert configLoadedFromString.getBackendUploadChunkSize(backendUrl) == 10485760
 
         backendUrl = 'https://cloud.server.com/'
         assert configLoadedFromString.getBackendSecret(backendUrl) == 'the-shared-secret'
@@ -249,6 +264,7 @@ directory = /srv/recording
         assert configLoadedFromString.getBackendVideoWidth(backendUrl) == 960
         assert configLoadedFromString.getBackendVideoHeight(backendUrl) == 540
         assert configLoadedFromString.getBackendDirectory(backendUrl) == '/srv/recording'
+        assert configLoadedFromString.getBackendUploadChunkSize(backendUrl) == 7864320
 
     def testGetBackendValuesWhenSeveralBackends(self, configLoadedFromString):
         configLoadedFromString.configString = """
@@ -262,11 +278,13 @@ secret = the-shared-secret1
 maxmessagesize = 512
 videowidth = 960
 videoheight = 540
+uploadchunksize = 5242880
 
 [second-backend]
 url = https://cloud.server2.com
 secret = the-shared-secret2
 directory = /srv/recording
+uploadchunksize = 7864320
 """
         configLoadedFromString.load('fake-file-name')
 
@@ -277,6 +295,7 @@ directory = /srv/recording
         assert configLoadedFromString.getBackendVideoWidth(backendUrl) == 1920
         assert configLoadedFromString.getBackendVideoHeight(backendUrl) == 1080
         assert configLoadedFromString.getBackendDirectory(backendUrl) == '/tmp'
+        assert configLoadedFromString.getBackendUploadChunkSize(backendUrl) == 10485760
 
         backendUrl = 'https://cloud.server1.com/'
         assert configLoadedFromString.getBackendSecret(backendUrl) == 'the-shared-secret1'
@@ -285,6 +304,7 @@ directory = /srv/recording
         assert configLoadedFromString.getBackendVideoWidth(backendUrl) == 960
         assert configLoadedFromString.getBackendVideoHeight(backendUrl) == 540
         assert configLoadedFromString.getBackendDirectory(backendUrl) == '/tmp'
+        assert configLoadedFromString.getBackendUploadChunkSize(backendUrl) == 5242880
 
         backendUrl = 'https://cloud.server2.com/'
         assert configLoadedFromString.getBackendSecret(backendUrl) == 'the-shared-secret2'
@@ -293,6 +313,7 @@ directory = /srv/recording
         assert configLoadedFromString.getBackendVideoWidth(backendUrl) == 1920
         assert configLoadedFromString.getBackendVideoHeight(backendUrl) == 1080
         assert configLoadedFromString.getBackendDirectory(backendUrl) == '/srv/recording'
+        assert configLoadedFromString.getBackendUploadChunkSize(backendUrl) == 7864320
 
     def testGetBackendValuesWhenDuplicatedUrl(self, configLoadedFromString, loggerSpy):
         configLoadedFromString.configString = """
@@ -312,6 +333,7 @@ url = https://cloud.server1.com
 secret = the-shared-secret1-third
 maxmessagesize = 1024
 directory = /var/tmp
+uploadchunksize = 7864320
 
 [fourth-backend]
 url = https://cloud.server1.com
@@ -339,6 +361,7 @@ videoheight = 270
         assert configLoadedFromString.getBackendVideoWidth(backendUrl) == 1920
         assert configLoadedFromString.getBackendVideoHeight(backendUrl) == 1080
         assert configLoadedFromString.getBackendDirectory(backendUrl) == '/srv/recording'
+        assert configLoadedFromString.getBackendUploadChunkSize(backendUrl) == 10485760
 
     def testGetSignalingSecretWhenNotSet(self, configLoadedFromString):
         configLoadedFromString.configString = """
