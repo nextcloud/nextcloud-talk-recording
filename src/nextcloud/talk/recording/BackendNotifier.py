@@ -37,6 +37,18 @@ def getRandomAndChecksum(backend, data):
 
     return random, hmacValue.hexdigest()
 
+def _isClientError(exception):
+    """
+    Returns whether the given exception is a client error (4xx) response.
+
+    :param exception: the exception to check.
+    :returns: True if the exception is an HTTP client error, False otherwise.
+    """
+    if not isinstance(exception, HTTPError) or exception.response is None:
+        return False
+
+    return 400 <= exception.response.status_code < 500
+
 def doRequest(backend, request, retries=3):
     """
     Send the request to the backend.
@@ -60,10 +72,7 @@ def doRequest(backend, request, retries=3):
     except Exception as exception:
         # Client errors (4xx) are deterministic, so retrying them would just fail
         # again and is therefore pointless.
-        isClientError = (isinstance(exception, HTTPError) and exception.response is not None and
-                         400 <= exception.response.status_code < 500)
-
-        if retries > 1 and not isClientError:
+        if retries > 1 and not _isClientError(exception):
             logger.exception("Failed to send message to backend, %d retries left!", retries)
             return doRequest(backend, request, retries - 1)
 
