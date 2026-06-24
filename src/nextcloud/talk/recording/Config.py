@@ -245,6 +245,15 @@ class Config:
         """
         return int(self._getBackendValue(backendUrl, 'videoheight', 1080))
 
+    def getBackendUploadChunkSize(self, backendUrl):
+        """
+        Returns the size in bytes of each chunk used when uploading a recording
+        to the backend with the chunked upload API.
+
+        Defaults to 10 MiB.
+        """
+        return int(self._getBackendValue(backendUrl, 'uploadchunksize', 10 * 1024 * 1024))
+
     def getBackendDirectory(self, backendUrl):
         """
         Returns the temporary directory used to store recordings until uploaded.
