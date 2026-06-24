@@ -216,8 +216,10 @@ def requestUpload(backend, token, fileName, owner):
     Requests a temporary upload share to upload a recording in chunks.
 
     Returns the data of the upload share ("token", "password" and "fileName"),
-    or None if the backend does not provide the endpoint to request an upload
-    share (which means that chunked uploads are not supported).
+    or None if chunked uploads are not supported, either because the backend
+    does not provide the endpoint to request an upload share (404) or because
+    the backend does not allow them, for example if public sharing is disabled
+    (400).
 
     :param backend: the backend to request the upload share to.
     :param token: the token of the conversation that was recorded.
