@@ -198,8 +198,8 @@ def uploadRecording(backend, token, fileName, owner):
     uploadShare = requestUpload(backend, token, fileName, owner)
 
     if uploadShare is None:
-        # The backend does not support chunked uploads, so fall back to directly
-        # uploading the recording in a single request.
+        # The backend does not support chunked uploads or public link sharing is disabled
+        # Fall back to directly uploading the recording in a single request.
         uploadRecordingDirectly(backend, token, fileName, owner)
 
         return
