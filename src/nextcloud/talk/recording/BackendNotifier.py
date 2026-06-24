@@ -255,6 +255,12 @@ def requestUpload(backend, token, fileName, owner):
 
             return None
 
+        if httpError.response is not None and httpError.response.status_code == 400:
+            logger.info("Backend %s does not allow chunked recording uploads (public sharing may be "
+                        "disabled), uploading directly", backend)
+
+            return None
+
         raise
 
     return response.json()['ocs']['data']
