@@ -55,6 +55,11 @@
 # Overridable by backend.
 #directory = /tmp
 
+# Size in bytes of each chunk used when uploading a recording to the backend
+# with the chunked upload API. It must be at least 5 MiB (5242880).
+# Required size could be overwritten by the Nextcloud server.
+#uploadchunksize = 10485760
+
 # Backend configurations as defined in the "[backend]" section above. The
 # section names must match the ids used in "backends" above.
 #[backend-id]
