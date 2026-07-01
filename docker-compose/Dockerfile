@@ -12,7 +12,7 @@ RUN apt-get --assume-yes upgrade
 RUN apt-get --assume-yes install software-properties-common
 
 # nextcloud-talk-recording dependencies
-RUN apt-get --assume-yes install ffmpeg pulseaudio python3-pip xvfb
+RUN apt-get --assume-yes install ffmpeg pulseaudio pulseaudio-utils  dbus python3-pip xvfb
 RUN pip3 install --upgrade requests
 
 # firefox
