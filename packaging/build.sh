@@ -219,5 +219,5 @@ USER=$(ls --long --numeric-uid-gid --directory . | sed 's/ \+/ /g' | cut --delim
 
 for TARGET in $TARGETS; do
 	echo "Building recording backend packages for ${TARGET_NAMES[$TARGET]}"
-	docker exec --tty --interactive --user $USER --workdir /nextcloud-talk-recording/packaging $CONTAINER-$TARGET make
+	docker exec --tty --interactive --user $USER --workdir /nextcloud-talk-recording/packaging --env OS_VERSION --env RELEASE --env DEBIAN_VERSION --env BUILD_DIR $CONTAINER-$TARGET make
 done
