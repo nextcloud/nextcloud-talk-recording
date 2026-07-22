@@ -9,6 +9,10 @@ set -e
 # geckodriver and PulseAudio related files.
 # The user will not be automatically removed if the package is uninstalled or
 # purged to avoid leaving behind files owned by the user/group.
-adduser --system nextcloud-talk-recording
+adduser --system --home /var/lib/nextcloud-talk-recording nextcloud-talk-recording
+
+# "adduser" succeeds if the user already exists even if the home directory does
+# not match, so ensure that the home directory is the expected one.
+usermod --home /var/lib/nextcloud-talk-recording --move-home nextcloud-talk-recording
 
 #DEBHELPER#
