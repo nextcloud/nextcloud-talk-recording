@@ -90,6 +90,7 @@ $(BUILD_DIR)/deb/nextcloud-talk-recording_$(NEXTCLOUD_TALK_RECORDING_VERSION)-$(
 # Builds the Python dependencies that are not included in at least one of the
 # supported distributions:
 # - Debian 11 (bullseye): pulsectl, pyvirtualdisplay >= 2.0, selenium >= 4.11.0
+# - Debian 12 (bookworm): selenium >= 4.11.0
 # - Ubuntu 20.04 (focal): pulsectl, pyvirtualdisplay >= 2.0, requests >= 2.25, selenium >= 4.11.0
 # - Ubuntu 22.04 (jammy): pulsectl, selenium >= 4.11.0
 #
@@ -98,6 +99,7 @@ $(BUILD_DIR)/deb/nextcloud-talk-recording_$(NEXTCLOUD_TALK_RECORDING_VERSION)-$(
 build-packages-deb-nextcloud-talk-recording-dependencies: build-packages-deb-nextcloud-talk-recording-dependencies-$(OS_VERSION)
 
 build-packages-deb-nextcloud-talk-recording-dependencies-debian11: build-packages-deb-pulsectl build-packages-deb-pyvirtualdisplay build-packages-deb-selenium build-packages-deb-selenium-dependencies
+build-packages-deb-nextcloud-talk-recording-dependencies-debian12: build-packages-deb-selenium
 build-packages-deb-nextcloud-talk-recording-dependencies-ubuntu20.04: build-packages-deb-pulsectl build-packages-deb-pyvirtualdisplay build-packages-deb-requests build-packages-deb-requests-dependencies build-packages-deb-selenium build-packages-deb-selenium-dependencies
 build-packages-deb-nextcloud-talk-recording-dependencies-ubuntu22.04: build-packages-deb-pulsectl build-packages-deb-selenium build-packages-deb-selenium-dependencies
 

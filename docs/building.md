@@ -12,6 +12,7 @@ The main branch of the [Nextcloud Talk Recording Server repository](https://gith
 
 Distribution packages are supported for the following GNU/Linux distributions:
 - Debian 11
+- Debian 12
 - Ubuntu 20.04
 - Ubuntu 22.04
 
