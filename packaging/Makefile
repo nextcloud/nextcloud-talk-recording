@@ -88,7 +88,7 @@ $(BUILD_DIR)/deb/nextcloud-talk-recording_$(NEXTCLOUD_TALK_RECORDING_VERSION)-$(
 	$(call copy-binary-deb-package,nextcloud_talk_recording,$(NEXTCLOUD_TALK_RECORDING_VERSION),nextcloud-talk-recording)
 
 # Builds the Python dependencies that are not included in at least one of the
-# Ubuntu supported releases:
+# supported distributions:
 # - Debian 11 (bullseye): pulsectl, pyvirtualdisplay >= 2.0, selenium >= 4.11.0
 # - Ubuntu 20.04 (focal): pulsectl, pyvirtualdisplay >= 2.0, requests >= 2.25, selenium >= 4.11.0
 # - Ubuntu 22.04 (jammy): pulsectl, selenium >= 4.11.0
@@ -129,7 +129,7 @@ $(BUILD_DIR)/deb/python3-requests_$(REQUESTS_VERSION)-$(DEBIAN_VERSION)_all.deb:
 	$(call copy-binary-deb-package,requests,$(REQUESTS_VERSION),python3-requests)
 
 # Builds the Python dependencies that are not included in at least one of the
-# Ubuntu supported releases:
+# supported distributions:
 # - Debian 11 (bullseye): unneeded, uses requests package from distribution
 # - Ubuntu 20.04 (focal): charset-normalizer >= 2, < 4
 # - Ubuntu 22.04 (jammy): unneeded, uses requests package from distribution
@@ -168,7 +168,7 @@ $(BUILD_DIR)/deb/python3-selenium_$(SELENIUM_VERSION)-$(DEBIAN_VERSION)_all.deb:
 	$(call copy-binary-deb-package,selenium,$(SELENIUM_VERSION),python3-selenium)
 
 # Builds the Python dependencies that are not included in at least one of the
-# Ubuntu supported releases:
+# supported distributions:
 # - Debian 11 (bullseye): python3-certifi >= 2021.10.8, python3-trio ~= 0.17, python3-trio-websocket ~= 0.9
 # - Ubuntu 20.04 (focal): python3-certifi >= 2021.10.8, python3-trio ~= 0.17, python3-trio-websocket ~= 0.9, python3-urllib3 >= 1.26, < 3
 # - Ubuntu 22.04 (jammy): python3-certifi >= 2021.10.8, python3-trio-websocket ~= 0.9
