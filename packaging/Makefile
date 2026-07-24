@@ -23,6 +23,15 @@ TRIO_VERSION := 0.21.0
 TRIO_WEBSOCKET_VERSION := 0.9.2
 URLLIB3_VERSION := 1.26.19
 
+# Since the 60.0.0 release, Setuptools includes a local, vendored copy of
+# distutils. stdeb calls setup.py with "--install-layout=deb", which is only
+# supported in patched distutils. Debian and Ubuntu explicitly patch distutils
+# in stdlib to support it, and in some versions they also implicitly patch
+# distutils at runtime, independently of where it comes from (through
+# "_distutils_system.mod.py"). However, when distutils provided by Setuptools
+# does not support the option distutils from stdlib needs to be used instead.
+SETUPTOOLS_USE_DISTUTILS := SETUPTOOLS_USE_DISTUTILS=stdlib
+
 timestamp-from-git = git log -1 --pretty=%ct $(1)
 
 timestamp-from-source-python-package = tar --list --verbose --full-time --gzip --file $(1) | head --lines 1 | sed 's/ \+/ /g' | cut --delimiter " " --fields 4-5 | date --file - +%s
@@ -33,14 +42,7 @@ download-source-python-package = python3 -m pip download --dest $(BUILD_DIR) --n
 
 extract-source-python-package = cd $(BUILD_DIR) && tar --extract --gzip --file $(1)-$(2).tar.gz
 
-# Since the 60.0.0 release, Setuptools includes a local, vendored copy of
-# distutils. stdeb calls setup.py with "--install-layout=deb", which is only
-# supported in patched distutils. Debian and Ubuntu explicitly patch distutils
-# in stdlib to support it, and in some versions they also implicitly patch
-# distutils at runtime, independently of where it comes from (through
-# "_distutils_system.mod.py"). However, when distutils provided by Setuptools
-# does not support the option distutils from stdlib needs to be used instead.
-build-deb-package = cd $(BUILD_DIR)/$(1)-$(2)/ && SOURCE_DATE_EPOCH=$(3) SETUPTOOLS_USE_DISTUTILS=stdlib python3 setup.py --command-packages=stdeb.command sdist_dsc --debian-version $(DEBIAN_VERSION) bdist_deb
+build-deb-package = cd $(BUILD_DIR)/$(1)-$(2)/ && SOURCE_DATE_EPOCH=$(3) $(SETUPTOOLS_USE_DISTUTILS) python3 setup.py --command-packages=stdeb.command sdist_dsc --debian-version $(DEBIAN_VERSION) bdist_deb
 
 copy-binary-deb-package = cp $(BUILD_DIR)/$(1)-$(2)/deb_dist/$(3)_$(2)-$(DEBIAN_VERSION)_all.deb $(BUILD_DIR)/deb/
 
@@ -87,7 +89,7 @@ $(BUILD_DIR)/deb/nextcloud-talk-recording_$(NEXTCLOUD_TALK_RECORDING_VERSION)-$(
 
 	# Build a source Debian package (with the systemd addon for dh) and then,
 	# from it, a binary Debian package.
-	cd $(BUILD_DIR)/nextcloud_talk_recording-$(NEXTCLOUD_TALK_RECORDING_VERSION)/ && SOURCE_DATE_EPOCH=$$($(call timestamp-from-git,../../../../)) SETUPTOOLS_USE_DISTUTILS=stdlib python3 setup.py --command-packages=stdeb.command sdist_dsc --with-dh-systemd --debian-version $(DEBIAN_VERSION) bdist_deb
+	cd $(BUILD_DIR)/nextcloud_talk_recording-$(NEXTCLOUD_TALK_RECORDING_VERSION)/ && SOURCE_DATE_EPOCH=$$($(call timestamp-from-git,../../../../)) $(SETUPTOOLS_USE_DISTUTILS) python3 setup.py --command-packages=stdeb.command sdist_dsc --with-dh-systemd --debian-version $(DEBIAN_VERSION) bdist_deb
 
 	$(call copy-binary-deb-package,nextcloud_talk_recording,$(NEXTCLOUD_TALK_RECORDING_VERSION),nextcloud-talk-recording)
 
