@@ -91,7 +91,7 @@ trap cleanUp EXIT
 # the volumes in the container) expect that.
 cd "$(dirname $0)"
 
-SUPPORTED_TARGETS="debian11 debian12 ubuntu20.04 ubuntu22.04"
+SUPPORTED_TARGETS="debian11 debian12 debian13 ubuntu20.04 ubuntu22.04"
 
 HELP="Usage: $(basename $0) [OPTION]...
 
@@ -158,6 +158,16 @@ function setupBuildEnvironmentInDebian12() {
 	docker exec $CONTAINER-debian12 bash -c "apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install --assume-yes make python3 python3-pip python3-venv python3-build python3-stdeb python3-all debhelper dh-python git dh-exec"
 }
 
+function setupBuildEnvironmentInDebian13() {
+	echo "Installing required build dependencies"
+	# "noninteractive" is used to provide default settings instead of asking for
+	# them (for example, for tzdata).
+	# stdeb was not compatible with Python >= 3.12 until version 0.11.0, but
+	# Debian 13 package of stdeb 0.10.0 is patched to make it compatible:
+	# https://sources.debian.org/patches/stdeb/0.10.0-5/0005-Migrate-off-SafeConfigParser.patch/
+	docker exec $CONTAINER-debian13 bash -c "apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install --assume-yes make python3 python3-venv python3-build python3-stdeb python3-all debhelper dh-python git dh-exec"
+}
+
 function setupBuildEnvironmentInUbuntu2004() {
 	echo "Installing required build dependencies"
 	# "noninteractive" is used to provide default settings instead of asking for
@@ -189,18 +199,21 @@ function setupBuildEnvironmentInUbuntu2204() {
 declare -A TARGET_NAMES
 TARGET_NAMES["debian11"]="Debian 11"
 TARGET_NAMES["debian12"]="Debian 12"
+TARGET_NAMES["debian13"]="Debian 13"
 TARGET_NAMES["ubuntu20.04"]="Ubuntu 20.04"
 TARGET_NAMES["ubuntu22.04"]="Ubuntu 22.04"
 
 declare -A TARGET_IMAGES
 TARGET_IMAGES["debian11"]="debian:11"
 TARGET_IMAGES["debian12"]="debian:12"
+TARGET_IMAGES["debian13"]="debian:13"
 TARGET_IMAGES["ubuntu20.04"]="ubuntu:20.04"
 TARGET_IMAGES["ubuntu22.04"]="ubuntu:22.04"
 
 declare -A TARGET_SETUP_FUNCTIONS
 TARGET_SETUP_FUNCTIONS["debian11"]="setupBuildEnvironmentInDebian11"
 TARGET_SETUP_FUNCTIONS["debian12"]="setupBuildEnvironmentInDebian12"
+TARGET_SETUP_FUNCTIONS["debian13"]="setupBuildEnvironmentInDebian13"
 TARGET_SETUP_FUNCTIONS["ubuntu20.04"]="setupBuildEnvironmentInUbuntu2004"
 TARGET_SETUP_FUNCTIONS["ubuntu22.04"]="setupBuildEnvironmentInUbuntu2204"
 

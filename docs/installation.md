@@ -45,6 +45,10 @@ echo 'deb [signed-by=/etc/apt/keyrings/mozillateam-ubuntu-ppa.asc] https://ppa.l
 ```
 echo 'deb [signed-by=/etc/apt/keyrings/mozillateam-ubuntu-ppa.asc] https://ppa.launchpadcontent.net/mozillateam/ppa/ubuntu jammy main' > /etc/apt/sources.list.d/mozillateam-ubuntu-ppa.list
 ```
+- In Debian 13, use packages for _noble_ (Ubuntu 24.04):
+```
+echo 'deb [signed-by=/etc/apt/keyrings/mozillateam-ubuntu-ppa.asc] https://ppa.launchpadcontent.net/mozillateam/ppa/ubuntu noble main' > /etc/apt/sources.list.d/mozillateam-ubuntu-ppa.list
+```
 
 Besides that the Firefox ESR package from the PPA needs to be configured to take precedence over the one in the Debian repositories:
 ```
@@ -122,6 +126,8 @@ When the recording server is started through its systemd service the configurati
 The configuration file must be edited to set the Nextcloud servers that are allowed to use the recording server, as well as the credentials for the recording server to use the signaling servers of those Nextcloud servers. Please refer to the sections below for the details.
 
 The temporary directory where the videos are stored while being recorded (and if they fail to be uploaded to the Nextcloud server) is `/tmp/`. That directory is typically a temporary file system stored in RAM, so depending on the available RAM and the number of simultaneous recordings it could affect the system or cause some recordings to suddenly fail due to running out of space. This can be customized in `backend->directory` to use a more suitable directory (for example, a directory under the home directory of the user running the recording server).
+
+In Debian 13, if the Selenium package provided by the distribution is used (which it is by default in the pre-built packages and in the packages built with the _build.sh_ script), the Selenium Manager will not be available, so the path to the Selenium driver must be set in `recording->driverPath`. The path to the Selenium driver provided by the default Firefox package is `/usr/bin/geckodriver`.
 
 By default the recording server listens for HTTP requests on `127.0.0.1:8000`. [As described below](#tls-termination-proxy) it is recommended to set up a TLS termination proxy in front of the recording server, and this TLS termination proxy is the one expected to listen on public interfaces. If needed, the IP and port to listen on for HTTP requests can be customized in `http->listen`.
 
@@ -228,7 +234,7 @@ If the recording worked as expected note that there could still be a subtle issu
 
 ### The Selenium driver or the browser can not be found
 
-If the Selenium Manager is not available (for example, when running Linux on arm64/aarch64) when a recording is started Selenium will not be able to find the driver and the recording will fail. When the Selenium Manager is not available the path to the Selenium driver must be explicitly set in the recording server configuration in `recording->driverPath`. In that case the path to the browser may also need to be set in `recording->browserPath` if the Selenium driver is not able to find it.
+If the Selenium Manager is not available (for example, when running Linux on arm64/aarch64, but also on amd64 if not included in the Selenium package) when a recording is started Selenium will not be able to find the driver and the recording will fail. When the Selenium Manager is not available the path to the Selenium driver must be explicitly set in the recording server configuration in `recording->driverPath`. In that case the path to the browser may also need to be set in `recording->browserPath` if the Selenium driver is not able to find it.
 
 Independently of that, even if the Selenium Manager is available, the recording could also fail if `recording->driverPath` or `recording->browserPath` are set to an invalid value. However, in some Selenium versions setting the paths does not fully override the automated handling of Selenium Manager, so if the paths are set to an invalid value the recording could also work due to Selenium Manager still falling back to downloading the driver or the browser.
 
