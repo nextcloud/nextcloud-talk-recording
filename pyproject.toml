@@ -3,6 +3,16 @@
 [project]
 name = "nextcloud-talk-recording"
 description = "Recording server for Nextcloud Talk"
+# The "readme" entry is not meant for PyPi, but for stdeb, which appends it to
+# the package description. However, stdeb does not convert markdown syntax, so
+# for now instead of linking to the actual README.md file a slightly simplified
+# plain text version is used.
+readme.text = """
+This is the official recording server to be used with Nextcloud Talk (https://github.com/nextcloud/spreed).
+
+It requires the standalone signaling server for Nextcloud Talk (https://github.com/strukturag/nextcloud-spreed-signaling).
+"""
+readme.content-type = "text/plain"
 authors = [
     { name = "Nextcloud Talk Team" },
 ]

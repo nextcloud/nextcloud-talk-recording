@@ -30,7 +30,9 @@ URLLIB3_VERSION := 1.26.19
 # distutils at runtime, independently of where it comes from (through
 # "_distutils_system.mod.py"). However, when distutils provided by Setuptools
 # does not support the option distutils from stdlib needs to be used instead.
-SETUPTOOLS_USE_DISTUTILS := SETUPTOOLS_USE_DISTUTILS=stdlib
+ifeq ($(OS_VERSION),$(filter $(OS_VERSION),debian11 ubuntu20.04))
+	SETUPTOOLS_USE_DISTUTILS := SETUPTOOLS_USE_DISTUTILS=stdlib
+endif
 
 timestamp-from-git = git log -1 --pretty=%ct $(1)
 
