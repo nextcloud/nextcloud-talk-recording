@@ -16,6 +16,7 @@ Distribution packages are supported for the following GNU/Linux distributions:
 - Debian 13
 - Ubuntu 20.04
 - Ubuntu 22.04
+- Ubuntu 24.04
 
 They can be built on those distributions by calling `make` in the _recording/packaging_ directory of the git sources. Nevertheless, the Makefile assumes that the build dependencies have been already installed in the system. Therefore it is recommended to run `build.sh` in the _recording/packaging_ directory, which will create Docker containers with the required dependencies and then run `make` inside them. Alternatively the dependencies can be checked under `Installing required build dependencies` in `build.sh` and manually installed in the system. Using `build.sh` the packages can be built for those target distributions on other distributions too.
 

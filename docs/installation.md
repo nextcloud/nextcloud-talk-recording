@@ -59,9 +59,9 @@ Pin-Priority: 1001
 ' | sudo tee /etc/apt/preferences.d/mozilla-firefox
 ```
 
-#### Ubuntu 22.04
+#### Ubuntu 22.04 and later
 
-In Ubuntu 22.04 the normal Firefox package was replaced by a Snap. Unfortunately the Snap package can not be used with the default packages, so the [PPA from Mozilla](https://launchpad.net/~mozillateam/+archive/ubuntu/ppa) needs to be setup instead before installing the packages (`add-apt-repository` is included in the package `software-properties-common`):
+In Ubuntu 22.04 and later the normal Firefox package was replaced by a Snap. Unfortunately the Snap package can not be used with the default packages, so the [PPA from Mozilla](https://launchpad.net/~mozillateam/+archive/ubuntu/ppa) needs to be setup instead before installing the packages (`add-apt-repository` is included in the package `software-properties-common`):
 ```
 add-apt-repository ppa:mozillateam/ppa
 ```
@@ -127,7 +127,7 @@ The configuration file must be edited to set the Nextcloud servers that are allo
 
 The temporary directory where the videos are stored while being recorded (and if they fail to be uploaded to the Nextcloud server) is `/tmp/`. That directory is typically a temporary file system stored in RAM, so depending on the available RAM and the number of simultaneous recordings it could affect the system or cause some recordings to suddenly fail due to running out of space. This can be customized in `backend->directory` to use a more suitable directory (for example, a directory under the home directory of the user running the recording server).
 
-In Debian 13, if the Selenium package provided by the distribution is used (which it is by default in the pre-built packages and in the packages built with the _build.sh_ script), the Selenium Manager will not be available, so the path to the Selenium driver must be set in `recording->driverPath`. The path to the Selenium driver provided by the default Firefox package is `/usr/bin/geckodriver`.
+In Debian 13 and Ubuntu 24.04, if the Selenium package provided by the distribution is used (which it is by default in the pre-built packages and in the packages built with the _build.sh_ script), the Selenium Manager will not be available, so the path to the Selenium driver must be set in `recording->driverPath`. The path to the Selenium driver provided by the default Firefox package is `/usr/bin/geckodriver`.
 
 By default the recording server listens for HTTP requests on `127.0.0.1:8000`. [As described below](#tls-termination-proxy) it is recommended to set up a TLS termination proxy in front of the recording server, and this TLS termination proxy is the one expected to listen on public interfaces. If needed, the IP and port to listen on for HTTP requests can be customized in `http->listen`.
 

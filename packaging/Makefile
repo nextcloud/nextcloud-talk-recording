@@ -112,6 +112,7 @@ $(BUILD_DIR)/deb/nextcloud-talk-recording_$(NEXTCLOUD_TALK_RECORDING_VERSION)-$(
 # - Debian 13 (trixie):
 # - Ubuntu 20.04 (focal): pulsectl, pyvirtualdisplay >= 2.0, requests >= 2.25, selenium >= 4.11.0
 # - Ubuntu 22.04 (jammy): pulsectl, selenium >= 4.11.0
+# - Ubuntu 24.04 (noble):
 #
 # requests < 2.25 is not compatible with urllib3 >= 1.26, which is required by
 # selenium.
@@ -122,6 +123,7 @@ build-packages-deb-nextcloud-talk-recording-dependencies-debian12: build-package
 build-packages-deb-nextcloud-talk-recording-dependencies-debian13:
 build-packages-deb-nextcloud-talk-recording-dependencies-ubuntu20.04: build-packages-deb-pulsectl build-packages-deb-pyvirtualdisplay build-packages-deb-requests build-packages-deb-requests-dependencies build-packages-deb-selenium build-packages-deb-selenium-dependencies
 build-packages-deb-nextcloud-talk-recording-dependencies-ubuntu22.04: build-packages-deb-pulsectl build-packages-deb-selenium build-packages-deb-selenium-dependencies
+build-packages-deb-nextcloud-talk-recording-dependencies-ubuntu24.04:
 
 build-packages-deb-pulsectl: $(BUILD_DIR)/deb/python3-pulsectl_$(PULSECTL_VERSION)-$(DEBIAN_VERSION)_all.deb
 $(BUILD_DIR)/deb/python3-pulsectl_$(PULSECTL_VERSION)-$(DEBIAN_VERSION)_all.deb: | $(BUILD_DIR)/deb
