@@ -34,8 +34,12 @@ download-source-python-package = python3 -m pip download --dest $(BUILD_DIR) --n
 extract-source-python-package = cd $(BUILD_DIR) && tar --extract --gzip --file $(1)-$(2).tar.gz
 
 # Since the 60.0.0 release, Setuptools includes a local, vendored copy of
-# distutils; this copy does not seem to work with stdeb, so it needs to be
-# disabled with "SETUPTOOLS_USE_DISTUTILS=stdlib".
+# distutils. stdeb calls setup.py with "--install-layout=deb", which is only
+# supported in patched distutils. Debian and Ubuntu explicitly patch distutils
+# in stdlib to support it, and in some versions they also implicitly patch
+# distutils at runtime, independently of where it comes from (through
+# "_distutils_system.mod.py"). However, when distutils provided by Setuptools
+# does not support the option distutils from stdlib needs to be used instead.
 build-deb-package = cd $(BUILD_DIR)/$(1)-$(2)/ && SOURCE_DATE_EPOCH=$(3) SETUPTOOLS_USE_DISTUTILS=stdlib python3 setup.py --command-packages=stdeb.command sdist_dsc --debian-version $(DEBIAN_VERSION) bdist_deb
 
 copy-binary-deb-package = cp $(BUILD_DIR)/$(1)-$(2)/deb_dist/$(3)_$(2)-$(DEBIAN_VERSION)_all.deb $(BUILD_DIR)/deb/
