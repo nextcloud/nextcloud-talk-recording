@@ -30,7 +30,7 @@ Before packages can be installed using the package managers of the distributions
 
 In Debian 11 there is no _geckodriver_ package, which is required to control Firefox from the recording server. Therefore the [PPA from Mozilla](https://launchpad.net/~mozillateam/+archive/ubuntu/ppa) needs to be setup instead before installing the packages. Although `add-apt-repository` is available in Debian 11 the PPA does not provide packages for _bullseye_, so the PPA needs to be manually added to use the packages for _focal_ (Ubuntu 20.04):
 ```
-apt-key adv --keyserver hkps://keyserver.ubuntu.com --recv-keys 0AB215679C571D1C8325275B9BDB3D89CE49EC21
+apt-key adv --keyserver hkps://keyserver.ubuntu.com --recv-keys 738BEB9321D1AAEC13EA9391AEBDF4819BE21867
 echo 'deb https://ppa.launchpadcontent.net/mozillateam/ppa/ubuntu focal main' > /etc/apt/sources.list.d/mozillateam-ubuntu-ppa.list
 ```
 
