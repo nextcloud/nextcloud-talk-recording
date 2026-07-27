@@ -34,6 +34,16 @@ ifeq ($(OS_VERSION),$(filter $(OS_VERSION),debian11 ubuntu20.04))
 	SETUPTOOLS_USE_DISTUTILS := SETUPTOOLS_USE_DISTUTILS=stdlib
 endif
 
+# stdeb provides "--with-dh-systemd" to enable the systemd addon for debhelper.
+# In debhelper compatibility level 10 the addon was enabled by default, and in
+# level 11 it was removed and replaced by dh_installsystemd (which is also
+# included in the standard dh sequence). Therefore "--with-dh-systemd" is only
+# needed in stdeb < 0.11.0, as in 0.11.0 the compatibility level was raised from
+# 9 to 12.
+ifeq ($(OS_VERSION),$(filter $(OS_VERSION),debian11 debian12 debian13 ubuntu20.04 ubuntu22.04))
+	WITH_DH_SYSTEMD := --with-dh-systemd
+endif
+
 timestamp-from-git = git log -1 --pretty=%ct $(1)
 
 timestamp-from-source-python-package = tar --list --verbose --full-time --gzip --file $(1) | head --lines 1 | sed 's/ \+/ /g' | cut --delimiter " " --fields 4-5 | date --file - +%s
@@ -89,9 +99,9 @@ $(BUILD_DIR)/deb/nextcloud-talk-recording_$(NEXTCLOUD_TALK_RECORDING_VERSION)-$(
 	cp --recursive nextcloud-talk-recording/. $(BUILD_DIR)/nextcloud_talk_recording-$(NEXTCLOUD_TALK_RECORDING_VERSION)/
 	cp ../server.conf.in $(BUILD_DIR)/nextcloud_talk_recording-$(NEXTCLOUD_TALK_RECORDING_VERSION)/
 
-	# Build a source Debian package (with the systemd addon for dh) and then,
-	# from it, a binary Debian package.
-	cd $(BUILD_DIR)/nextcloud_talk_recording-$(NEXTCLOUD_TALK_RECORDING_VERSION)/ && SOURCE_DATE_EPOCH=$$($(call timestamp-from-git,../../../../)) $(SETUPTOOLS_USE_DISTUTILS) python3 setup.py --command-packages=stdeb.command sdist_dsc --with-dh-systemd --debian-version $(DEBIAN_VERSION) bdist_deb
+	# Build a source Debian package (with the systemd addon for dh, if
+	# needed) and then, from it, a binary Debian package.
+	cd $(BUILD_DIR)/nextcloud_talk_recording-$(NEXTCLOUD_TALK_RECORDING_VERSION)/ && SOURCE_DATE_EPOCH=$$($(call timestamp-from-git,../../../../)) $(SETUPTOOLS_USE_DISTUTILS) python3 setup.py --command-packages=stdeb.command sdist_dsc $(WITH_DH_SYSTEMD) --debian-version $(DEBIAN_VERSION) bdist_deb
 
 	$(call copy-binary-deb-package,nextcloud_talk_recording,$(NEXTCLOUD_TALK_RECORDING_VERSION),nextcloud-talk-recording)
 
