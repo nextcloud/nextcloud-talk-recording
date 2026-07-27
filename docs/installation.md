@@ -32,17 +32,18 @@ In Debian 11 and later there is no _geckodriver_ package, which is required to c
 
 First the signing key for the PPA from Mozilla needs to be added:
 ```
-apt-key adv --keyserver hkps://keyserver.ubuntu.com --recv-keys 738BEB9321D1AAEC13EA9391AEBDF4819BE21867
+install --directory --mode 0755 /etc/apt/keyrings
+wget --quiet --output-document=/etc/apt/keyrings/mozillateam-ubuntu-ppa.asc 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x738BEB9321D1AAEC13EA9391AEBDF4819BE21867'
 ```
 
 And then the repository itself:
 - In Debian 11, use packages for _focal_ (Ubuntu 20.04):
 ```
-echo 'deb https://ppa.launchpadcontent.net/mozillateam/ppa/ubuntu focal main' > /etc/apt/sources.list.d/mozillateam-ubuntu-ppa.list
+echo 'deb [signed-by=/etc/apt/keyrings/mozillateam-ubuntu-ppa.asc] https://ppa.launchpadcontent.net/mozillateam/ppa/ubuntu focal main' > /etc/apt/sources.list.d/mozillateam-ubuntu-ppa.list
 ```
 - In Debian 12, use packages for _jammy_ (Ubuntu 22.04):
 ```
-echo 'deb https://ppa.launchpadcontent.net/mozillateam/ppa/ubuntu jammy main' > /etc/apt/sources.list.d/mozillateam-ubuntu-ppa.list
+echo 'deb [signed-by=/etc/apt/keyrings/mozillateam-ubuntu-ppa.asc] https://ppa.launchpadcontent.net/mozillateam/ppa/ubuntu jammy main' > /etc/apt/sources.list.d/mozillateam-ubuntu-ppa.list
 ```
 
 Besides that the Firefox ESR package from the PPA needs to be configured to take precedence over the one in the Debian repositories:
