@@ -115,6 +115,16 @@ The recording server does not need to be run as root (and it should not be run a
 
 You might want to configure a systemd service (or any equivalent service) to automatically start the recording server when the machine boots. The sources for the _.deb_ packages include a service file in _recording/packaging/nextcloud-talk-recording/debian/nextcloud-talk-recording.service_ that could be used as inspiration.
 
+## Operating system updates when using pre-built packages or packages built with the helper scripts
+
+In Debian 11, Debian 12, Ubuntu 20.04 and Ubuntu 22.04 some of the Python dependencies are not provided by the distribution packages, so the pre-built packages and the packages built with the helper scripts include custom packages for those dependencies.
+
+In Debian 13, Ubuntu 24.04, and later versions the distributions provide packages for all the Python dependencies, so there is no need for custom packages. However, the version of some of the packages provided by the distribution are older than the version of the custom packages, so if the operating system is updated from a previous version where those custom packages were installed the packages from the distribution will not be installed.
+
+It would be highly recommended to use the packages provided by the distribution, and using an older version of those packages is not a problem, so when performing an operating system update to Debian 13 or Ubuntu 24.04 the custom packages should be removed.
+
+This could be done by removing `nextcloud-talk-recording` before the operating system update. After the package is removed the no longer needed dependencies, which in this case should be the custom packages, would be orphaned, so they can be removed with `apt-get autoremove`. Note that all this must be done before the operating system update, as after the update other packages could depend on the custom packages and thus it might not be possible to autoremove them.
+
 ## System setup
 
 Independently of how it was installed the recording server needs to be configured. Depending on the setup additional components like a firewall might also need to be setup or adjusted.
