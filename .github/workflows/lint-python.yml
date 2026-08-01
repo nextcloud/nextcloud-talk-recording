@@ -41,7 +41,7 @@ jobs:
           python -m pip install --editable .[dev]
 
       - name: Lint
-        uses: wearerequired/lint-action@52d6fc54110bb04d626676af138f2c6544793ba4 # v3.0.0
+        uses: wearerequired/lint-action@124229c6e2974984ba137c67a499ba28bfc33e33 # v3.0.2
         with:
           check_name: ${linter} (${{ matrix.python-versions }})
           pylint: true
