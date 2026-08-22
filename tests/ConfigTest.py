@@ -66,6 +66,184 @@ trustedproxies =
 
         assert configLoadedFromString.getTrustedProxies() == []
 
+    def testGetBackendIdWhenNotSet(self, configLoadedFromString):
+        configLoadedFromString.configString = """
+[backend]
+"""
+        configLoadedFromString.load('fake-file-name')
+
+        assert configLoadedFromString.getBackendId('https://cloud.unknown.com') == 'https://cloud.unknown.com'
+
+    def testGetBackendIdWhenSet(self, configLoadedFromString):
+        configLoadedFromString.configString = """
+[backend]
+backends = first-backend
+
+[first-backend]
+url = https://cloud.server.com
+secret = the-shared-secret
+"""
+        configLoadedFromString.load('fake-file-name')
+
+        assert configLoadedFromString.getBackendId('https://cloud.unknown.com') == 'https://cloud.unknown.com'
+        assert configLoadedFromString.getBackendId('https://cloud.unknown.com/') == 'https://cloud.unknown.com'
+        assert configLoadedFromString.getBackendId('https://cloud.server.com') == 'first-backend'
+        assert configLoadedFromString.getBackendId('https://cloud.server.com/') == 'first-backend'
+
+    def testGetBackendIdWhenSetWithTrailingSlashInUrl(self, configLoadedFromString):
+        configLoadedFromString.configString = """
+[backend]
+backends = first-backend
+
+[first-backend]
+url = https://cloud.server.com/
+secret = the-shared-secret
+"""
+        configLoadedFromString.load('fake-file-name')
+
+        assert configLoadedFromString.getBackendId('https://cloud.unknown.com') == 'https://cloud.unknown.com'
+        assert configLoadedFromString.getBackendId('https://cloud.unknown.com/') == 'https://cloud.unknown.com'
+        assert configLoadedFromString.getBackendId('https://cloud.server.com') == 'first-backend'
+        assert configLoadedFromString.getBackendId('https://cloud.server.com/') == 'first-backend'
+
+    def testGetBackendIdWhenSetWithSpacesInId(self, configLoadedFromString):
+        configLoadedFromString.configString = """
+[backend]
+backends = backend id with spaces
+
+[backend id with spaces]
+url = https://cloud.server.com/
+secret = the-shared-secret
+"""
+        configLoadedFromString.load('fake-file-name')
+
+        assert configLoadedFromString.getBackendId('https://cloud.unknown.com') == 'https://cloud.unknown.com'
+        assert configLoadedFromString.getBackendId('https://cloud.unknown.com/') == 'https://cloud.unknown.com'
+        assert configLoadedFromString.getBackendId('https://cloud.server.com') == 'backend id with spaces'
+        assert configLoadedFromString.getBackendId('https://cloud.server.com/') == 'backend id with spaces'
+
+    def testGetBackendIdWhenSetWithDoubleQuotesInId(self, configLoadedFromString):
+        configLoadedFromString.configString = """
+[backend]
+backends = backend-id-with-"double-quotes"
+
+[backend-id-with-"double-quotes"]
+url = https://cloud.server.com/
+secret = the-shared-secret
+"""
+        configLoadedFromString.load('fake-file-name')
+
+        assert configLoadedFromString.getBackendId('https://cloud.unknown.com') == 'https://cloud.unknown.com'
+        assert configLoadedFromString.getBackendId('https://cloud.unknown.com/') == 'https://cloud.unknown.com'
+        assert configLoadedFromString.getBackendId('https://cloud.server.com') == 'backend-id-with-"double-quotes"'
+        assert configLoadedFromString.getBackendId('https://cloud.server.com/') == 'backend-id-with-"double-quotes"'
+
+    def testGetBackendIdWhenSetWithNonLatinCharactersInId(self, configLoadedFromString):
+        configLoadedFromString.configString = """
+[backend]
+backends = backend-id-with-non-latin-characters-कبカ
+
+[backend-id-with-non-latin-characters-कبカ]
+url = https://cloud.server.com/
+secret = the-shared-secret
+"""
+        configLoadedFromString.load('fake-file-name')
+
+        assert configLoadedFromString.getBackendId('https://cloud.unknown.com') == 'https://cloud.unknown.com'
+        assert configLoadedFromString.getBackendId('https://cloud.unknown.com/') == 'https://cloud.unknown.com'
+        assert configLoadedFromString.getBackendId('https://cloud.server.com') == 'backend-id-with-non-latin-characters-कبカ'
+        assert configLoadedFromString.getBackendId('https://cloud.server.com/') == 'backend-id-with-non-latin-characters-कبカ'
+
+    def testGetBackendIdWhenAllowingAll(self, configLoadedFromString):
+        configLoadedFromString.configString = """
+[backend]
+allowall = true
+backends = first-backend
+
+[first-backend]
+url = https://cloud.server.com
+secret = the-shared-secret
+"""
+        configLoadedFromString.load('fake-file-name')
+
+        assert configLoadedFromString.getBackendId('https://cloud.unknown.com') == 'https://cloud.unknown.com'
+        assert configLoadedFromString.getBackendId('https://cloud.unknown.com/') == 'https://cloud.unknown.com'
+        assert configLoadedFromString.getBackendId('https://cloud.server.com') == 'first-backend'
+        assert configLoadedFromString.getBackendId('https://cloud.server.com/') == 'first-backend'
+
+    def testGetBackendIdWhenExplicitlyDisallowingAll(self, configLoadedFromString):
+        configLoadedFromString.configString = """
+[backend]
+allowall = false
+backends = first-backend
+
+[first-backend]
+url = https://cloud.server.com
+secret = the-shared-secret
+"""
+        configLoadedFromString.load('fake-file-name')
+
+        assert configLoadedFromString.getBackendId('https://cloud.unknown.com') == 'https://cloud.unknown.com'
+        assert configLoadedFromString.getBackendId('https://cloud.unknown.com/') == 'https://cloud.unknown.com'
+        assert configLoadedFromString.getBackendId('https://cloud.server.com') == 'first-backend'
+        assert configLoadedFromString.getBackendId('https://cloud.server.com/') == 'first-backend'
+
+    def testGetBackendIdWhenSeveralBackends(self, configLoadedFromString):
+        configLoadedFromString.configString = """
+[backend]
+backends = first-backend, second-backend
+
+[first-backend]
+url = https://cloud.server1.com
+secret = the-shared-secret1
+
+[second-backend]
+url = https://cloud.server2.com
+secret = the-shared-secret2
+"""
+        configLoadedFromString.load('fake-file-name')
+
+        assert configLoadedFromString.getBackendId('https://cloud.unknown.com') == 'https://cloud.unknown.com'
+        assert configLoadedFromString.getBackendId('https://cloud.unknown.com/') == 'https://cloud.unknown.com'
+        assert configLoadedFromString.getBackendId('https://cloud.server1.com') == 'first-backend'
+        assert configLoadedFromString.getBackendId('https://cloud.server1.com/') == 'first-backend'
+        assert configLoadedFromString.getBackendId('https://cloud.server2.com') == 'second-backend'
+        assert configLoadedFromString.getBackendId('https://cloud.server2.com/') == 'second-backend'
+
+    def testGetBackendIdWhenDuplicatedUrl(self, configLoadedFromString, loggerSpy):
+        configLoadedFromString.configString = """
+[backend]
+backends = last-section-but-first-backend, second-backend, third-backend, fourth-backend
+
+[second-backend]
+url = https://cloud.server1.com/
+secret = the-shared-secret1-second
+
+[third-backend]
+url = https://cloud.server1.com
+secret = the-shared-secret1-third
+
+[fourth-backend]
+url = https://cloud.server1.com
+secret = the-shared-secret1-fourth
+
+[last-section-but-first-backend]
+url = https://cloud.server1.com
+secret = the-shared-secret1-last-section-but-first
+"""
+        configLoadedFromString.load('fake-file-name')
+
+        assert loggerSpy.error.call_args_list == [
+            call('Duplicated backend URL (%s), backend "%s" will be ignored', 'https://cloud.server1.com', 'last-section-but-first-backend'),
+            call('Duplicated backend URL (%s), backend "%s" will be ignored', 'https://cloud.server1.com', 'second-backend'),
+            call('Duplicated backend URL (%s), backend "%s" will be ignored', 'https://cloud.server1.com', 'third-backend'),
+        ]
+
+        assert configLoadedFromString.getBackendId('https://cloud.unknown.com') == 'https://cloud.unknown.com'
+        assert configLoadedFromString.getBackendId('https://cloud.unknown.com/') == 'https://cloud.unknown.com'
+        assert configLoadedFromString.getBackendId('https://cloud.server1.com') == 'fourth-backend'
+        assert configLoadedFromString.getBackendId('https://cloud.server1.com/') == 'fourth-backend'
+
     def testGetBackendValuesWhenNotSet(self, configLoadedFromString):
         configLoadedFromString.configString = """
 [backend]
