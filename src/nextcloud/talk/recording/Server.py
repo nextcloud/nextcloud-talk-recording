@@ -210,16 +210,16 @@ def handleBackendRequest(token):
     """
     Handles backend requests.
     """
-    backend, data = _validateRequest()
+    backendUrl, data = _validateRequest()
 
     if 'type' not in data:
         raise BadRequest()
 
     if data['type'] == 'start':
-        return startRecording(backend, token, data)
+        return startRecording(backendUrl, token, data)
 
     if data['type'] == 'stop':
-        return stopRecording(backend, token, data)
+        return stopRecording(backendUrl, token, data)
 
     raise BadRequest()
 
@@ -227,19 +227,19 @@ def _validateRequest():
     """
     Validates the current request.
 
-    :return: the backend that sent the request and the object representation of
-             the body.
+    :return: the URL of the backend that sent the request and the object
+             representation of the body.
     """
 
     if 'Talk-Recording-Backend' not in request.headers:
         app.logger.warning("Missing Talk-Recording-Backend header")
         raise Forbidden()
 
-    backend = request.headers['Talk-Recording-Backend']
+    backendUrl = request.headers['Talk-Recording-Backend']
 
-    secret = config.getBackendSecret(backend)
+    secret = config.getBackendSecret(backendUrl)
     if not secret:
-        app.logger.warning("No secret configured for backend %s", backend)
+        app.logger.warning("No secret configured for backend %s", backendUrl)
         raise Forbidden()
 
     if 'Talk-Recording-Random' not in request.headers:
@@ -254,7 +254,7 @@ def _validateRequest():
 
     checksum = request.headers['Talk-Recording-Checksum']
 
-    maximumMessageSize = config.getBackendMaximumMessageSize(backend)
+    maximumMessageSize = config.getBackendMaximumMessageSize(backendUrl)
 
     if not request.content_length or request.content_length > maximumMessageSize:
         app.logger.warning("Message size above limit: %d %d", request.content_length, maximumMessageSize)
@@ -267,7 +267,7 @@ def _validateRequest():
         app.logger.warning("Checksum verification failed: %s %s", checksum, expectedChecksum)
         raise Forbidden()
 
-    return backend, json.loads(body)
+    return backendUrl, json.loads(body)
 
 def _calculateChecksum(secret, random, body):
     secret = secret.encode()
@@ -277,7 +277,7 @@ def _calculateChecksum(secret, random, body):
 
     return hmacValue.hexdigest()
 
-def startRecording(backend, token, data):
+def startRecording(backendUrl, token, data):
     """
     Starts the recording in the given backend and room (identified by its
     token).
@@ -303,11 +303,11 @@ def startRecording(backend, token, data):
       }
     }
 
-    :param backend: the backend that send the request.
+    :param backendUrl: the URL of the backend that send the request.
     :param token: the token of the room to start the recording in.
     :param data: the data used to start the recording.
     """
-    serviceId = f'{backend}-{token}'
+    serviceId = f'{backendUrl}-{token}'
 
     if 'start' not in data:
         raise BadRequest()
@@ -336,14 +336,14 @@ def startRecording(backend, token, data):
     service = None
     with servicesLock:
         if serviceId in services:
-            app.logger.warning("Trying to start recording again: %s %s", backend, token)
+            app.logger.warning("Trying to start recording again: %s %s", backendUrl, token)
             return {}
 
-        service = Service(backend, token, status, owner)
+        service = Service(backendUrl, token, status, owner)
 
         services[serviceId] = service
 
-    app.logger.info("Start recording: %s %s", backend, token)
+    app.logger.info("Start recording: %s %s", backendUrl, token)
 
     serviceStartThread = Thread(target=_startRecordingService, args=[service, actorType, actorId], daemon=True)
     serviceStartThread.start()
@@ -359,10 +359,10 @@ def _startRecordingService(service, actorType, actorId):
 
     :param service: the Service to start.
     """
-    serviceId = f'{service.backend}-{service.token}'
+    serviceId = f'{service.backendUrl}-{service.token}'
 
-    metricsRecordingsCurrent.labels(service.backend).inc()
-    metricsRecordingsTotal.labels(service.backend).inc()
+    metricsRecordingsCurrent.labels(service.backendUrl).inc()
+    metricsRecordingsTotal.labels(service.backendUrl).inc()
 
     try:
         service.start(actorType, actorId)
@@ -371,18 +371,18 @@ def _startRecordingService(service, actorType, actorId):
             if serviceId not in services:
                 # Service was already stopped, exception should have been caused
                 # by stopping the helpers even before the recorder started.
-                app.logger.info("Recording stopped before starting: %s %s", service.backend, service.token, exc_info=exception)
+                app.logger.info("Recording stopped before starting: %s %s", service.backendUrl, service.token, exc_info=exception)
 
                 return
 
-            app.logger.exception("Failed to start recording: %s %s", service.backend, service.token)
+            app.logger.exception("Failed to start recording: %s %s", service.backendUrl, service.token)
 
             services.pop(serviceId)
 
-            metricsRecordingsCurrent.labels(service.backend).dec()
-            metricsRecordingsFailedTotal.labels(service.backend).inc()
+            metricsRecordingsCurrent.labels(service.backendUrl).dec()
+            metricsRecordingsFailedTotal.labels(service.backendUrl).inc()
 
-def stopRecording(backend, token, data):
+def stopRecording(backendUrl, token, data):
     """
     Stops the recording in the given backend and room (identified by its token).
 
@@ -401,11 +401,11 @@ def stopRecording(backend, token, data):
       }
     }
 
-    :param backend: the backend that send the request.
+    :param backendUrl: the URL of the backend that send the request.
     :param token: the token of the room to stop the recording in.
     :param data: the data used to stop the recording.
     """
-    serviceId = f'{backend}-{token}'
+    serviceId = f'{backendUrl}-{token}'
 
     if 'stop' not in data:
         raise BadRequest()
@@ -419,11 +419,11 @@ def stopRecording(backend, token, data):
     service = None
     with servicesLock:
         if serviceId not in services and serviceId in servicesStopping:
-            app.logger.info("Trying to stop recording again: %s %s", backend, token)
+            app.logger.info("Trying to stop recording again: %s %s", backendUrl, token)
             return {}
 
         if serviceId not in services:
-            app.logger.warning("Trying to stop unknown recording: %s %s", backend, token)
+            app.logger.warning("Trying to stop unknown recording: %s %s", backendUrl, token)
             raise NotFound()
 
         service = services[serviceId]
@@ -432,7 +432,7 @@ def stopRecording(backend, token, data):
 
         servicesStopping[serviceId] = service
 
-    app.logger.info("Stop recording: %s %s", backend, token)
+    app.logger.info("Stop recording: %s %s", backendUrl, token)
 
     serviceStopThread = Thread(target=_stopRecordingService, args=[service, actorType, actorId], daemon=True)
     serviceStopThread.start()
@@ -448,28 +448,28 @@ def _stopRecordingService(service, actorType, actorId):
 
     :param service: the Service to stop.
     """
-    serviceId = f'{service.backend}-{service.token}'
+    serviceId = f'{service.backendUrl}-{service.token}'
 
     try:
         service.stop(actorType, actorId)
     except Exception:
-        app.logger.exception("Failed to stop recording: %s %s", service.backend, service.token)
+        app.logger.exception("Failed to stop recording: %s %s", service.backendUrl, service.token)
 
         # Besides explicit failures to upload the recording, failures to stop
         # the recording (or, rather, to notify the Nextcloud server that the
         # recording was stopped) are implicitly failures to upload the
         # recording, as the upload will not be even tried.
-        metricsRecordingsUploadsFailedTotal.labels(service.backend).inc()
+        metricsRecordingsUploadsFailedTotal.labels(service.backendUrl).inc()
     finally:
         with servicesLock:
             if serviceId not in servicesStopping:
                 # This should never happen.
-                app.logger.error("Recording stopped when not in the list of stopping services: %s %s", service.backend, service.token)
+                app.logger.error("Recording stopped when not in the list of stopping services: %s %s", service.backendUrl, service.token)
             else:
                 servicesStopping.pop(serviceId)
 
-            metricsRecordingsCurrent.labels(service.backend).dec()
-            metricsRecordingsDurationSeconds.labels(service.backend).inc(service.getRecordingDuration())
+            metricsRecordingsCurrent.labels(service.backendUrl).dec()
+            metricsRecordingsDurationSeconds.labels(service.backendUrl).inc(service.getRecordingDuration())
 
 # Despite this handler it seems that in some cases the geckodriver could have
 # been killed already when it is executed, which unfortunately prevents a proper

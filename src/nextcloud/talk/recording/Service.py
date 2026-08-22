@@ -119,10 +119,10 @@ class Service:
     expected to be called from different threads.
     """
 
-    def __init__(self, backend, token, status, owner):
-        self._logger = logging.getLogger(f"{__name__}-{backend}-{token}")
+    def __init__(self, backendUrl, token, status, owner):
+        self._logger = logging.getLogger(f"{__name__}-{backendUrl}-{token}")
 
-        self.backend = backend
+        self.backendUrl = backendUrl
         self.token = token
         self.status = status
         self.owner = owner
@@ -156,14 +156,14 @@ class Service:
                could not be started).
         """
 
-        width = config.getBackendVideoWidth(self.backend)
-        height = config.getBackendVideoHeight(self.backend)
+        width = config.getBackendVideoWidth(self.backendUrl)
+        height = config.getBackendVideoHeight(self.backendUrl)
 
-        directory = config.getBackendDirectory(self.backend).rstrip('/')
+        directory = config.getBackendDirectory(self.backendUrl).rstrip('/')
 
-        sanitizedBackend = ''.join([character for character in self.backend if character.isalnum()])
+        sanitizedBackendUrl = ''.join([character for character in self.backendUrl if character.isalnum()])
 
-        fullDirectory = f'{directory}/{sanitizedBackend}/{self.token}'
+        fullDirectory = f'{directory}/{sanitizedBackendUrl}/{self.token}'
 
         try:
             # Ensure that PulseAudio is running.
@@ -181,7 +181,7 @@ class Service:
                 raise Exception("Display started after recording was stopped")
 
             # Start new audio sink for the audio output of the browser.
-            self._audioModuleIndex, audioSinkIndex, audioSourceIndex = newAudioSink(f"{sanitizedBackend}-{self.token}")
+            self._audioModuleIndex, audioSinkIndex, audioSourceIndex = newAudioSink(f"{sanitizedBackendUrl}-{self.token}")
             audioSinkIndex = str(audioSinkIndex)
             audioSourceIndex = str(audioSourceIndex)
 
@@ -197,7 +197,7 @@ class Service:
             browserPath = config.getBrowserPathForRecording()
 
             self._logger.debug("Starting participant")
-            self._participant = Participant(browser, self.backend, width, height, env, driverPath, browserPath, self._logger)
+            self._participant = Participant(browser, self.backendUrl, width, height, env, driverPath, browserPath, self._logger)
 
             self._logger.debug("Joining call")
             self._participant.joinCall(self.token)
@@ -210,7 +210,7 @@ class Service:
 
             self._started.set()
 
-            BackendNotifier.started(self.backend, self.token, self.status, actorType, actorId)
+            BackendNotifier.started(self.backendUrl, self.token, self.status, actorType, actorId)
 
             extensionlessFileName = f'{fullDirectory}/Recording {datetime.now().strftime("%Y-%m-%d %H-%M-%S")}'
 
@@ -224,7 +224,7 @@ class Service:
             self._process = subprocess.Popen(recorderArguments, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 
             # Log recorder output.
-            Thread(target=processLog, args=[f"{__name__}.recorder-{self.backend}-{self.token}", self._process.stdout], daemon=True).start()
+            Thread(target=processLog, args=[f"{__name__}.recorder-{self.backendUrl}-{self.token}", self._process.stdout], daemon=True).start()
 
             if self._stopped.is_set():
                 # Not strictly needed, as if the recorder is started after the
@@ -253,7 +253,7 @@ class Service:
                 raise
 
             try:
-                BackendNotifier.failed(self.backend, self.token)
+                BackendNotifier.failed(self.backendUrl, self.token)
             except:
                 pass
 
@@ -277,7 +277,7 @@ class Service:
 
         self._stopHelpers()
 
-        BackendNotifier.stopped(self.backend, self.token, actorType, actorId)
+        BackendNotifier.stopped(self.backendUrl, self.token, actorType, actorId)
 
         if not self._fileName:
             self._logger.error("Recording stopping before starting, nothing to upload")
@@ -289,7 +289,7 @@ class Service:
 
             return
 
-        BackendNotifier.uploadRecording(self.backend, self.token, self._fileName, self.owner)
+        BackendNotifier.uploadRecording(self.backendUrl, self.token, self._fileName, self.owner)
 
         os.remove(self._fileName)
 
