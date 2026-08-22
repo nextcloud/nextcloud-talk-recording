@@ -20,6 +20,8 @@ The following metrics are available:
 | `recording_recordings_total`                      | Counter   | 0.2.0     | The total number of recordings                                                                         | `backend`                         |
 | `recording_recordings_duration_seconds_total`     | Counter   | 0.2.0     | The total duration of all recordings, see [notes](#recording_recordings_duration_seconds_total)        | `backend`                         |
 
+- The value of the `backend` label is the identifier for the backend (its corresponding section name) used in the configuration file of the recording server or, if `allowall` is set and the backend is not explicitly configured, the URL of the backend.
+
 ### Notes
 
 #### Integer values

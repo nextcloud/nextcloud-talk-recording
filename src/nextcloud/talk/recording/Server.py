@@ -361,8 +361,8 @@ def _startRecordingService(service, actorType, actorId):
     """
     serviceId = f'{service.backendUrl}-{service.token}'
 
-    metricsRecordingsCurrent.labels(service.backendUrl).inc()
-    metricsRecordingsTotal.labels(service.backendUrl).inc()
+    metricsRecordingsCurrent.labels(service.backendId).inc()
+    metricsRecordingsTotal.labels(service.backendId).inc()
 
     try:
         service.start(actorType, actorId)
@@ -379,8 +379,8 @@ def _startRecordingService(service, actorType, actorId):
 
             services.pop(serviceId)
 
-            metricsRecordingsCurrent.labels(service.backendUrl).dec()
-            metricsRecordingsFailedTotal.labels(service.backendUrl).inc()
+            metricsRecordingsCurrent.labels(service.backendId).dec()
+            metricsRecordingsFailedTotal.labels(service.backendId).inc()
 
 def stopRecording(backendUrl, token, data):
     """
@@ -459,7 +459,7 @@ def _stopRecordingService(service, actorType, actorId):
         # the recording (or, rather, to notify the Nextcloud server that the
         # recording was stopped) are implicitly failures to upload the
         # recording, as the upload will not be even tried.
-        metricsRecordingsUploadsFailedTotal.labels(service.backendUrl).inc()
+        metricsRecordingsUploadsFailedTotal.labels(service.backendId).inc()
     finally:
         with servicesLock:
             if serviceId not in servicesStopping:
@@ -468,8 +468,8 @@ def _stopRecordingService(service, actorType, actorId):
             else:
                 servicesStopping.pop(serviceId)
 
-            metricsRecordingsCurrent.labels(service.backendUrl).dec()
-            metricsRecordingsDurationSeconds.labels(service.backendUrl).inc(service.getRecordingDuration())
+            metricsRecordingsCurrent.labels(service.backendId).dec()
+            metricsRecordingsDurationSeconds.labels(service.backendId).inc(service.getRecordingDuration())
 
 # Despite this handler it seems that in some cases the geckodriver could have
 # been killed already when it is executed, which unfortunately prevents a proper

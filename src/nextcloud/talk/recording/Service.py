@@ -123,6 +123,7 @@ class Service:
         self._logger = logging.getLogger(f"{__name__}-{backendUrl}-{token}")
 
         self.backendUrl = backendUrl
+        self.backendId = config.getBackendId(backendUrl)
         self.token = token
         self.status = status
         self.owner = owner
