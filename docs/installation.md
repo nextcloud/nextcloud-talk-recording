@@ -61,7 +61,7 @@ echo '
 Package: *
 Pin: release o=LP-PPA-mozillateam
 Pin-Priority: 1001
-' | sudo tee /etc/apt/preferences.d/mozilla-firefox
+' > /etc/apt/preferences.d/mozilla-firefox
 ```
 
 #### Ubuntu 22.04 and later
@@ -77,7 +77,7 @@ echo '
 Package: *
 Pin: release o=LP-PPA-mozillateam
 Pin-Priority: 1001
-' | sudo tee /etc/apt/preferences.d/mozilla-firefox
+' > /etc/apt/preferences.d/mozilla-firefox
 ```
 
 ### Built packages installation
