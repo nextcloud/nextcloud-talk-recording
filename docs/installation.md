@@ -55,15 +55,6 @@ After adding the repository the package index needs to be updated with the packa
 apt-get update
 ```
 
-Besides that the Firefox ESR package from the PPA needs to be configured to take precedence over the one in the Debian repositories:
-```
-echo '
-Package: *
-Pin: release o=LP-PPA-mozillateam
-Pin-Priority: 1001
-' > /etc/apt/preferences.d/mozilla-firefox
-```
-
 #### Ubuntu 22.04 and later
 
 In Ubuntu 22.04 and later the normal Firefox package was replaced by a Snap. Unfortunately the Snap package can not be used with the default packages (see [Browsers and Snap packages](#browsers-and-snap-packages) for more details), so the [PPA from Mozilla](https://launchpad.net/~mozillateam/+archive/ubuntu/ppa) needs to be setup instead before installing the packages (`add-apt-repository` is included in the package `software-properties-common`):
