@@ -43,6 +43,9 @@ def main():
     host = parsed.hostname
     port = parsed.port
 
+    if host is None or port is None:
+        raise ValueError(f'Invalid http->listen value: {listen}')
+
     app.run(host, port, threaded=True)
 
 if __name__ == '__main__':

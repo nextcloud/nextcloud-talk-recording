@@ -49,3 +49,18 @@ class MainTest:
 
         assert capturedArgs['host'] == expectedHost
         assert capturedArgs['port'] == expectedPort
+
+    @pytest.mark.parametrize('listen', [
+        # Missing port
+        '127.0.0.1',
+        'localhost',
+        # Missing brackets in IPv6 address
+        '::1',
+        '::',
+    ])
+    def testInvalidListenAddress(self, listen, monkeypatch):
+        monkeypatch.setattr(mainModule.config, 'getListen', lambda: listen)
+        monkeypatch.setattr(mainModule.app, 'run', lambda host, port, **kwargs: pytest.fail('The server should not be started'))
+
+        with pytest.raises(ValueError):
+            mainModule.main()
