@@ -50,6 +50,11 @@ echo 'deb [signed-by=/etc/apt/keyrings/mozillateam-ubuntu-ppa.asc] https://ppa.l
 echo 'deb [signed-by=/etc/apt/keyrings/mozillateam-ubuntu-ppa.asc] https://ppa.launchpadcontent.net/mozillateam/ppa/ubuntu noble main' > /etc/apt/sources.list.d/mozillateam-ubuntu-ppa.list
 ```
 
+After adding the repository the package index needs to be updated with the packages from the repository:
+```
+apt-get update
+```
+
 Besides that the Firefox ESR package from the PPA needs to be configured to take precedence over the one in the Debian repositories:
 ```
 echo '
