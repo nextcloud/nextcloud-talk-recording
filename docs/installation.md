@@ -66,7 +66,7 @@ Pin-Priority: 1001
 
 #### Ubuntu 22.04 and later
 
-In Ubuntu 22.04 and later the normal Firefox package was replaced by a Snap. Unfortunately the Snap package can not be used with the default packages, so the [PPA from Mozilla](https://launchpad.net/~mozillateam/+archive/ubuntu/ppa) needs to be setup instead before installing the packages (`add-apt-repository` is included in the package `software-properties-common`):
+In Ubuntu 22.04 and later the normal Firefox package was replaced by a Snap. Unfortunately the Snap package can not be used with the default packages (see [Browsers and Snap packages](#browsers-and-snap-packages) for more details), so the [PPA from Mozilla](https://launchpad.net/~mozillateam/+archive/ubuntu/ppa) needs to be setup instead before installing the packages (`add-apt-repository` is included in the package `software-properties-common`):
 ```
 add-apt-repository ppa:mozillateam/ppa
 ```
@@ -119,6 +119,35 @@ python3 -m pip install "file://$(pwd)/nextcloud-talk-recording"
 The recording server does not need to be run as root (and it should not be run as root). It can be started as a regular user with `nextcloud-talk-recording --config {PATH_TO_THE_CONFIGURATION_FILE)` (or, if the helper script is not available, directly with `python3 -m nextcloud.talk.recording --config {PATH_TO_THE_CONFIGURATION_FILE)`. Nevertheless, please note that the user needs to have a home directory.
 
 You might want to configure a systemd service (or any equivalent service) to automatically start the recording server when the machine boots. The sources for the _.deb_ packages include a service file in _recording/packaging/nextcloud-talk-recording/debian/nextcloud-talk-recording.service_ that could be used as inspiration.
+
+## Browsers and Snap packages
+
+Browsers installed through Snap packages are not officially supported.
+
+In Ubuntu 24.04 the Snap package for Chromium will be installed when the package for the recording server is installed, as it is a recommended dependency of the Selenium package provided by the distribution. However, it can be just removed afterwards, as recommended dependencies are "soft" dependencies and can be removed without removing the package that installed them. Another possibility would be to prevent the package from being installed in first place by passing `--no-install-recommends` to `apt-get/apt install`, although that would ignore all the recommended dependencies, not only Chromium. Alternatively the package could be just left installed, as although it will not be usable it should not interfere either with the recording server.
+
+### Using Snap packaged browsers
+
+As already mentioned browsers installed through Snap packages are not officially supported. But if, for some unavoidable reason, a Snap browser must be used with the recording server some system changes are needed.
+
+In order to run a command provided by a Snap package the session is expected to have been initialized through PAM, as it requires the setup done by certain modules (like [_pam_systemd_](https://www.freedesktop.org/software/systemd/man/latest/pam_systemd.html)). This is not the case when running a command as a different user with (just) the `User=` option of systemd services, or even with `su --login`.
+
+If a systemd service is used to manage the recording server, like in the pre-built and manually built packages, [a PAM session can be open for its process](https://www.freedesktop.org/software/systemd/man/latest/systemd.exec.html#PAMName=) by calling `systemctl edit nextcloud-talk-recording` and adding:
+```
+[Service]
+PAMName=nextcloud-talk-recording
+```
+
+Note, however, that the recording server logs will be no longer shown with `journalctl --unit nextcloud-talk-recording`, and you would need something like `journalctl --unit session-cXXX.scope` instead. You can find the exact unit name by running `journalctl --output with-unit` and looking for a recording server log.
+
+On the other hand, if the recording server is directly run, rather than `su --login nextcloud-talk-recording --shell /bin/bash --command "nextcloud-talk-recording --config /etc/nextcloud-talk-recording/server.conf"` it should be run instead with something like `machinectl shell nextcloud-talk-recording@.host /bin/bash -c "nextcloud-talk-recording --config /etc/nextcloud-talk-recording/server.conf"`.
+
+Besides that, Snaps are meant to be run by normal users, so by default the home directory of the user is expected to be under _/home_. The pre-built and manually built packages run the recording server as a system user with a home directory in _/var/lib/nextcloud-talk-recording_, so [home directories under _/var/lib_ need to be explicitly allowed](https://snapcraft.io/docs/explanation/how-snaps-work/home-outside-home) with:
+```
+snap set system homedirs=/var/lib
+```
+
+Note that, depending on your system configuration, there could be additional restrictions in AppArmor that prevent using home directories for Snaps in _/var/lib_. For example, if it is set as a read-only filesystem somewhere in _/etc/apparmor.d_.
 
 ## Operating system updates when using pre-built packages or packages built with the helper scripts
 
