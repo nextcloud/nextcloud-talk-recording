@@ -24,6 +24,17 @@ from .Config import config
 
 logger = logging.getLogger(__name__)
 
+def _getIntervalsFileName(fileName):
+    """
+    Returns the sidecar JSON filename matching the given recording file.
+
+    :param fileName: the recording file name.
+    :return: the intervals JSON file name.
+    """
+
+    extensionlessFileName, _ = os.path.splitext(fileName)
+    return extensionlessFileName + ' speaking times.json'
+
 def getRandomAndChecksum(backendUrl, data):
     """
     Returns a random string and the checksum of the given data with that random.
@@ -193,7 +204,13 @@ def uploadRecording(backendUrl, token, fileName, owner):
     :param owner: the owner of the uploaded file.
     """
 
+    intervalsFileName = _getIntervalsFileName(fileName)
+    intervalsFileName = intervalsFileName if os.path.exists(intervalsFileName) else None
+
     logger.info("Upload recording %s to %s in %s as %s", fileName, backendUrl, token, owner)
+
+    if intervalsFileName:
+        logger.info("Also uploading speaker intervals from %s", intervalsFileName)
 
     uploadShare = requestUpload(backendUrl, token, fileName, owner)
 
@@ -287,7 +304,10 @@ def uploadRecordingInChunks(backendUrl, uploadShare, fileName):
     sharePassword = uploadShare['password']
     auth = (shareToken, sharePassword)
 
-    # A unique upload directory is used for each upload to prevent conflicts
+    intervalsFileName = _getIntervalsFileName(fileName)
+    intervalsFileName = intervalsFileName if os.path.exists(intervalsFileName) else None
+
+    # A unique upload directory is used for all upload to prevent conflicts
     # with leftover chunks from a previous failed upload.
     uploadId = token_urlsafe(32)
     uploadUrl = backendUrl + '/public.php/dav/uploads/' + shareToken + '/' + uploadId
@@ -325,6 +345,37 @@ def uploadRecordingInChunks(backendUrl, uploadShare, fileName):
     # Assemble the uploaded chunks into the final file at the destination.
     doRequest(backendUrl, Request('MOVE', uploadUrl + '/.file', headers, auth=auth))
 
+    if intervalsFileName:
+        _uploadSmallFileViaWebDAV(backendUrl, shareToken, sharePassword, intervalsFileName)
+
+def _uploadSmallFileViaWebDAV(backendUrl, shareToken, sharePassword, fileName):
+    """
+    Uploads a small file via a single WebDAV PUT request to the public
+    WebDAV endpoint.
+
+    :param backendUrl: the base URL of the backend.
+    :param shareToken: the token of the upload share.
+    :param sharePassword: the password of the upload share.
+    :param fileName: the file to upload.
+    """
+
+    backendUrl = backendUrl.rstrip('/')
+    auth = (shareToken, sharePassword)
+
+    destinationUrl = backendUrl + '/public.php/dav/files/' + shareToken + '/' + quote(os.path.basename(fileName))
+
+    headers = {
+        'Destination': destinationUrl,
+        'User-Agent': recording.USER_AGENT,
+    }
+
+    # pylint: disable=consider-using-with
+    doRequest(
+        backendUrl,
+        Request('PUT', destinationUrl, headers, data=open(fileName, 'rb'), auth=auth)
+    )
+
+
 def store(backendUrl, token, fileName, owner):
     """
     Triggers the post-processing of a recording previously uploaded in chunks.
@@ -338,10 +389,15 @@ def store(backendUrl, token, fileName, owner):
 
     url = backendUrl.rstrip('/') + '/ocs/v2.php/apps/spreed/api/v1/recording/' + token + '/store'
 
-    data = json.dumps({
+    intervalsBaseName = os.path.basename(_getIntervalsFileName(fileName))
+
+    storeData = {
         'owner': owner,
         'fileName': fileName,
-    }).encode()
+        'intervalsFileName': intervalsBaseName,
+    }
+
+    data = json.dumps(storeData).encode()
 
     # The checksum is calculated from the conversation token, like in the other
     # recording endpoints.
@@ -378,6 +434,9 @@ def uploadRecordingDirectly(backendUrl, token, fileName, owner):
 
     url = backendUrl.rstrip('/') + '/ocs/v2.php/apps/spreed/api/v1/recording/' + token + '/store'
 
+    intervalsFileName = _getIntervalsFileName(fileName)
+    intervalsFileName = intervalsFileName if os.path.exists(intervalsFileName) else None
+
     # Plain values become arguments, while tuples become files; the body used to
     # calculate the checksum is empty.
     data = {
@@ -385,6 +444,10 @@ def uploadRecordingDirectly(backendUrl, token, fileName, owner):
         # pylint: disable=consider-using-with
         'file': (os.path.basename(fileName), open(fileName, 'rb')),
     }
+
+    if intervalsFileName:
+        # pylint: disable=consider-using-with
+        data['intervalsFile'] = (os.path.basename(intervalsFileName), open(intervalsFileName, 'rb'))
 
     multipartEncoder = MultipartEncoder(data)
 
