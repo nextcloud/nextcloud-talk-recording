@@ -698,7 +698,9 @@ allowed_ips = 127.0.0.1, 2001:db8::0, not-an-ip, 192.168.0.0/16, 2001:db8::1234:
         configLoadedFromString.load('fake-file-name')
 
         assert configLoadedFromString.getStatsAllowedIps() == [
-            ip_network('127.0.0.1')
+            ip_network('127.0.0.1'),
+            ip_network('::1'),
+            ip_network('::ffff:127.0.0.1')
         ]
 
     def testGetStatsAllowedIpsWhenEmpty(self, configLoadedFromString):

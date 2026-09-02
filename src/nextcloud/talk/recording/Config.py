@@ -153,6 +153,8 @@ class Config:
 
         if 'stats' not in self._configParser or 'allowed_ips' not in self._configParser['stats']:
             self._statsAllowedIps.append(ip_network('127.0.0.1'))
+            self._statsAllowedIps.append(ip_network('::1'))
+            self._statsAllowedIps.append(ip_network('::ffff:127.0.0.1'))
 
             return
 
