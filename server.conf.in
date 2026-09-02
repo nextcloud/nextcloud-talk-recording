@@ -152,7 +152,9 @@
 # Manager will try to find the right one in $PATH, downloading it as a fallback.
 # Note that Selenium Manager does not work in some architectures (for example,
 # Linux on arm64/aarch64), so in those architectures the driver must be
-# explicitly set.
+# explicitly set. The driver must be explicitly set if Selenium Manager is not
+# available either in the system for any reason, even if the architecture is
+# compatible.
 #driverPath =
 
 # Path to the browser executable to use for recordings.
@@ -162,9 +164,10 @@
 # installed Selenium version if the executable is not found Selenium Manager may
 # also download the browser as a fallback.
 # Note that Selenium Manager does not work in some architectures (for example,
-# Linux on arm64/aarch64); in those architectures the Selenium driver will try
-# to find the executable, but the executable may need to be explicitly set if
-# not found by the driver.
+# Linux on arm64/aarch64); in those architectures (or if Selenium Manager is not
+# available in the system for any reason, even if the architecture is
+# compatible) the Selenium driver will try to find the executable, but the
+# executable may need to be explicitly set if not found by the driver.
 #browserPath =
 
 [stats]

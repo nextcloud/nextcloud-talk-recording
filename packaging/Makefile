@@ -23,6 +23,27 @@ TRIO_VERSION := 0.21.0
 TRIO_WEBSOCKET_VERSION := 0.9.2
 URLLIB3_VERSION := 1.26.19
 
+# Since the 60.0.0 release, Setuptools includes a local, vendored copy of
+# distutils. stdeb calls setup.py with "--install-layout=deb", which is only
+# supported in patched distutils. Debian and Ubuntu explicitly patch distutils
+# in stdlib to support it, and in some versions they also implicitly patch
+# distutils at runtime, independently of where it comes from (through
+# "_distutils_system.mod.py"). However, when distutils provided by Setuptools
+# does not support the option distutils from stdlib needs to be used instead.
+ifeq ($(OS_VERSION),$(filter $(OS_VERSION),debian11 ubuntu20.04))
+	SETUPTOOLS_USE_DISTUTILS := SETUPTOOLS_USE_DISTUTILS=stdlib
+endif
+
+# stdeb provides "--with-dh-systemd" to enable the systemd addon for debhelper.
+# In debhelper compatibility level 10 the addon was enabled by default, and in
+# level 11 it was removed and replaced by dh_installsystemd (which is also
+# included in the standard dh sequence). Therefore "--with-dh-systemd" is only
+# needed in stdeb < 0.11.0, as in 0.11.0 the compatibility level was raised from
+# 9 to 12.
+ifeq ($(OS_VERSION),$(filter $(OS_VERSION),debian11 debian12 debian13 ubuntu20.04 ubuntu22.04))
+	WITH_DH_SYSTEMD := --with-dh-systemd
+endif
+
 timestamp-from-git = git log -1 --pretty=%ct $(1)
 
 timestamp-from-source-python-package = tar --list --verbose --full-time --gzip --file $(1) | head --lines 1 | sed 's/ \+/ /g' | cut --delimiter " " --fields 4-5 | date --file - +%s
@@ -33,10 +54,7 @@ download-source-python-package = python3 -m pip download --dest $(BUILD_DIR) --n
 
 extract-source-python-package = cd $(BUILD_DIR) && tar --extract --gzip --file $(1)-$(2).tar.gz
 
-# Since the 60.0.0 release, Setuptools includes a local, vendored copy of
-# distutils; this copy does not seem to work with stdeb, so it needs to be
-# disabled with "SETUPTOOLS_USE_DISTUTILS=stdlib".
-build-deb-package = cd $(BUILD_DIR)/$(1)-$(2)/ && SOURCE_DATE_EPOCH=$(3) SETUPTOOLS_USE_DISTUTILS=stdlib python3 setup.py --command-packages=stdeb.command sdist_dsc --debian-version $(DEBIAN_VERSION) bdist_deb
+build-deb-package = cd $(BUILD_DIR)/$(1)-$(2)/ && SOURCE_DATE_EPOCH=$(3) $(SETUPTOOLS_USE_DISTUTILS) python3 setup.py --command-packages=stdeb.command sdist_dsc --debian-version $(DEBIAN_VERSION) bdist_deb
 
 copy-binary-deb-package = cp $(BUILD_DIR)/$(1)-$(2)/deb_dist/$(3)_$(2)-$(DEBIAN_VERSION)_all.deb $(BUILD_DIR)/deb/
 
@@ -81,25 +99,31 @@ $(BUILD_DIR)/deb/nextcloud-talk-recording_$(NEXTCLOUD_TALK_RECORDING_VERSION)-$(
 	cp --recursive nextcloud-talk-recording/. $(BUILD_DIR)/nextcloud_talk_recording-$(NEXTCLOUD_TALK_RECORDING_VERSION)/
 	cp ../server.conf.in $(BUILD_DIR)/nextcloud_talk_recording-$(NEXTCLOUD_TALK_RECORDING_VERSION)/
 
-	# Build a source Debian package (with the systemd addon for dh) and then,
-	# from it, a binary Debian package.
-	cd $(BUILD_DIR)/nextcloud_talk_recording-$(NEXTCLOUD_TALK_RECORDING_VERSION)/ && SOURCE_DATE_EPOCH=$$($(call timestamp-from-git,../../../../)) SETUPTOOLS_USE_DISTUTILS=stdlib python3 setup.py --command-packages=stdeb.command sdist_dsc --with-dh-systemd --debian-version $(DEBIAN_VERSION) bdist_deb
+	# Build a source Debian package (with the systemd addon for dh, if
+	# needed) and then, from it, a binary Debian package.
+	cd $(BUILD_DIR)/nextcloud_talk_recording-$(NEXTCLOUD_TALK_RECORDING_VERSION)/ && SOURCE_DATE_EPOCH=$$($(call timestamp-from-git,../../../../)) $(SETUPTOOLS_USE_DISTUTILS) python3 setup.py --command-packages=stdeb.command sdist_dsc $(WITH_DH_SYSTEMD) --debian-version $(DEBIAN_VERSION) bdist_deb
 
 	$(call copy-binary-deb-package,nextcloud_talk_recording,$(NEXTCLOUD_TALK_RECORDING_VERSION),nextcloud-talk-recording)
 
 # Builds the Python dependencies that are not included in at least one of the
-# Ubuntu supported releases:
+# supported distributions:
 # - Debian 11 (bullseye): pulsectl, pyvirtualdisplay >= 2.0, selenium >= 4.11.0
+# - Debian 12 (bookworm): selenium >= 4.11.0
+# - Debian 13 (trixie):
 # - Ubuntu 20.04 (focal): pulsectl, pyvirtualdisplay >= 2.0, requests >= 2.25, selenium >= 4.11.0
 # - Ubuntu 22.04 (jammy): pulsectl, selenium >= 4.11.0
+# - Ubuntu 24.04 (noble):
 #
 # requests < 2.25 is not compatible with urllib3 >= 1.26, which is required by
 # selenium.
 build-packages-deb-nextcloud-talk-recording-dependencies: build-packages-deb-nextcloud-talk-recording-dependencies-$(OS_VERSION)
 
 build-packages-deb-nextcloud-talk-recording-dependencies-debian11: build-packages-deb-pulsectl build-packages-deb-pyvirtualdisplay build-packages-deb-selenium build-packages-deb-selenium-dependencies
+build-packages-deb-nextcloud-talk-recording-dependencies-debian12: build-packages-deb-selenium
+build-packages-deb-nextcloud-talk-recording-dependencies-debian13:
 build-packages-deb-nextcloud-talk-recording-dependencies-ubuntu20.04: build-packages-deb-pulsectl build-packages-deb-pyvirtualdisplay build-packages-deb-requests build-packages-deb-requests-dependencies build-packages-deb-selenium build-packages-deb-selenium-dependencies
 build-packages-deb-nextcloud-talk-recording-dependencies-ubuntu22.04: build-packages-deb-pulsectl build-packages-deb-selenium build-packages-deb-selenium-dependencies
+build-packages-deb-nextcloud-talk-recording-dependencies-ubuntu24.04:
 
 build-packages-deb-pulsectl: $(BUILD_DIR)/deb/python3-pulsectl_$(PULSECTL_VERSION)-$(DEBIAN_VERSION)_all.deb
 $(BUILD_DIR)/deb/python3-pulsectl_$(PULSECTL_VERSION)-$(DEBIAN_VERSION)_all.deb: | $(BUILD_DIR)/deb
@@ -129,7 +153,7 @@ $(BUILD_DIR)/deb/python3-requests_$(REQUESTS_VERSION)-$(DEBIAN_VERSION)_all.deb:
 	$(call copy-binary-deb-package,requests,$(REQUESTS_VERSION),python3-requests)
 
 # Builds the Python dependencies that are not included in at least one of the
-# Ubuntu supported releases:
+# supported distributions:
 # - Debian 11 (bullseye): unneeded, uses requests package from distribution
 # - Ubuntu 20.04 (focal): charset-normalizer >= 2, < 4
 # - Ubuntu 22.04 (jammy): unneeded, uses requests package from distribution
@@ -168,7 +192,7 @@ $(BUILD_DIR)/deb/python3-selenium_$(SELENIUM_VERSION)-$(DEBIAN_VERSION)_all.deb:
 	$(call copy-binary-deb-package,selenium,$(SELENIUM_VERSION),python3-selenium)
 
 # Builds the Python dependencies that are not included in at least one of the
-# Ubuntu supported releases:
+# supported distributions:
 # - Debian 11 (bullseye): python3-certifi >= 2021.10.8, python3-trio ~= 0.17, python3-trio-websocket ~= 0.9
 # - Ubuntu 20.04 (focal): python3-certifi >= 2021.10.8, python3-trio ~= 0.17, python3-trio-websocket ~= 0.9, python3-urllib3 >= 1.26, < 3
 # - Ubuntu 22.04 (jammy): python3-certifi >= 2021.10.8, python3-trio-websocket ~= 0.9

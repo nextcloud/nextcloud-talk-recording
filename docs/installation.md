@@ -26,26 +26,38 @@ Finally disk size will also depend on the number of simultaneous recordings, as 
 
 Before packages can be installed using the package managers of the distributions, some distributions have additional requirements that need to be fulfilled first.
 
-#### Debian 11
+#### Debian
 
-In Debian 11 there is no _geckodriver_ package, which is required to control Firefox from the recording server. Therefore the [PPA from Mozilla](https://launchpad.net/~mozillateam/+archive/ubuntu/ppa) needs to be setup instead before installing the packages. Although `add-apt-repository` is available in Debian 11 the PPA does not provide packages for _bullseye_, so the PPA needs to be manually added to use the packages for _focal_ (Ubuntu 20.04):
-```
-apt-key adv --keyserver hkps://keyserver.ubuntu.com --recv-keys 0AB215679C571D1C8325275B9BDB3D89CE49EC21
-echo 'deb https://ppa.launchpadcontent.net/mozillateam/ppa/ubuntu focal main' > /etc/apt/sources.list.d/mozillateam-ubuntu-ppa.list
-```
+In Debian 11 and later there is no _geckodriver_ package, which is required to control Firefox from the recording server. Therefore the [PPA from Mozilla](https://launchpad.net/~mozillateam/+archive/ubuntu/ppa) needs to be setup instead before installing the packages. Although `add-apt-repository` is available in Debian 11 and later the PPA does not provide packages for Debian, so the PPA needs to be manually added to use the equivalent packages for Ubuntu.
 
-Besides that the Firefox ESR package from the PPA needs to be configured to take precedence over the one in the Debian repositories:
+First the signing key for the PPA from Mozilla needs to be added:
 ```
-echo '
-Package: *
-Pin: release o=LP-PPA-mozillateam
-Pin-Priority: 1001
-' | sudo tee /etc/apt/preferences.d/mozilla-firefox
+install --directory --mode 0755 /etc/apt/keyrings
+wget --quiet --output-document=/etc/apt/keyrings/mozillateam-ubuntu-ppa.asc 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x738BEB9321D1AAEC13EA9391AEBDF4819BE21867'
 ```
 
-#### Ubuntu 22.04
+And then the repository itself:
+- In Debian 11, use packages for _focal_ (Ubuntu 20.04):
+```
+echo 'deb [signed-by=/etc/apt/keyrings/mozillateam-ubuntu-ppa.asc] https://ppa.launchpadcontent.net/mozillateam/ppa/ubuntu focal main' > /etc/apt/sources.list.d/mozillateam-ubuntu-ppa.list
+```
+- In Debian 12, use packages for _jammy_ (Ubuntu 22.04):
+```
+echo 'deb [signed-by=/etc/apt/keyrings/mozillateam-ubuntu-ppa.asc] https://ppa.launchpadcontent.net/mozillateam/ppa/ubuntu jammy main' > /etc/apt/sources.list.d/mozillateam-ubuntu-ppa.list
+```
+- In Debian 13, use packages for _noble_ (Ubuntu 24.04):
+```
+echo 'deb [signed-by=/etc/apt/keyrings/mozillateam-ubuntu-ppa.asc] https://ppa.launchpadcontent.net/mozillateam/ppa/ubuntu noble main' > /etc/apt/sources.list.d/mozillateam-ubuntu-ppa.list
+```
 
-In Ubuntu 22.04 the normal Firefox package was replaced by a Snap. Unfortunately the Snap package can not be used with the default packages, so the [PPA from Mozilla](https://launchpad.net/~mozillateam/+archive/ubuntu/ppa) needs to be setup instead before installing the packages (`add-apt-repository` is included in the package `software-properties-common`):
+After adding the repository the package index needs to be updated with the packages from the repository:
+```
+apt-get update
+```
+
+#### Ubuntu 22.04 and later
+
+In Ubuntu 22.04 and later the normal Firefox package was replaced by a Snap. Unfortunately the Snap package can not be used with the default packages (see [Browsers and Snap packages](#browsers-and-snap-packages) for more details), so the [PPA from Mozilla](https://launchpad.net/~mozillateam/+archive/ubuntu/ppa) needs to be setup instead before installing the packages (`add-apt-repository` is included in the package `software-properties-common`):
 ```
 add-apt-repository ppa:mozillateam/ppa
 ```
@@ -56,7 +68,7 @@ echo '
 Package: *
 Pin: release o=LP-PPA-mozillateam
 Pin-Priority: 1001
-' | sudo tee /etc/apt/preferences.d/mozilla-firefox
+' > /etc/apt/preferences.d/mozilla-firefox
 ```
 
 ### Built packages installation
@@ -99,6 +111,45 @@ The recording server does not need to be run as root (and it should not be run a
 
 You might want to configure a systemd service (or any equivalent service) to automatically start the recording server when the machine boots. The sources for the _.deb_ packages include a service file in _recording/packaging/nextcloud-talk-recording/debian/nextcloud-talk-recording.service_ that could be used as inspiration.
 
+## Browsers and Snap packages
+
+Browsers installed through Snap packages are not officially supported.
+
+In Ubuntu 24.04 the Snap package for Chromium will be installed when the package for the recording server is installed, as it is a recommended dependency of the Selenium package provided by the distribution. However, it can be just removed afterwards, as recommended dependencies are "soft" dependencies and can be removed without removing the package that installed them. Another possibility would be to prevent the package from being installed in first place by passing `--no-install-recommends` to `apt-get/apt install`, although that would ignore all the recommended dependencies, not only Chromium. Alternatively the package could be just left installed, as although it will not be usable it should not interfere either with the recording server.
+
+### Using Snap packaged browsers
+
+As already mentioned browsers installed through Snap packages are not officially supported. But if, for some unavoidable reason, a Snap browser must be used with the recording server some system changes are needed.
+
+In order to run a command provided by a Snap package the session is expected to have been initialized through PAM, as it requires the setup done by certain modules (like [_pam_systemd_](https://www.freedesktop.org/software/systemd/man/latest/pam_systemd.html)). This is not the case when running a command as a different user with (just) the `User=` option of systemd services, or even with `su --login`.
+
+If a systemd service is used to manage the recording server, like in the pre-built and manually built packages, [a PAM session can be open for its process](https://www.freedesktop.org/software/systemd/man/latest/systemd.exec.html#PAMName=) by calling `systemctl edit nextcloud-talk-recording` and adding:
+```
+[Service]
+PAMName=nextcloud-talk-recording
+```
+
+Note, however, that the recording server logs will be no longer shown with `journalctl --unit nextcloud-talk-recording`, and you would need something like `journalctl --unit session-cXXX.scope` instead. You can find the exact unit name by running `journalctl --output with-unit` and looking for a recording server log.
+
+On the other hand, if the recording server is directly run, rather than `su --login nextcloud-talk-recording --shell /bin/bash --command "nextcloud-talk-recording --config /etc/nextcloud-talk-recording/server.conf"` it should be run instead with something like `machinectl shell nextcloud-talk-recording@.host /bin/bash -c "nextcloud-talk-recording --config /etc/nextcloud-talk-recording/server.conf"`.
+
+Besides that, Snaps are meant to be run by normal users, so by default the home directory of the user is expected to be under _/home_. The pre-built and manually built packages run the recording server as a system user with a home directory in _/var/lib/nextcloud-talk-recording_, so [home directories under _/var/lib_ need to be explicitly allowed](https://snapcraft.io/docs/explanation/how-snaps-work/home-outside-home) with:
+```
+snap set system homedirs=/var/lib
+```
+
+Note that, depending on your system configuration, there could be additional restrictions in AppArmor that prevent using home directories for Snaps in _/var/lib_. For example, if it is set as a read-only filesystem somewhere in _/etc/apparmor.d_.
+
+## Operating system updates when using pre-built packages or packages built with the helper scripts
+
+In Debian 11, Debian 12, Ubuntu 20.04 and Ubuntu 22.04 some of the Python dependencies are not provided by the distribution packages, so the pre-built packages and the packages built with the helper scripts include custom packages for those dependencies.
+
+In Debian 13, Ubuntu 24.04, and later versions the distributions provide packages for all the Python dependencies, so there is no need for custom packages. However, the version of some of the packages provided by the distribution are older than the version of the custom packages, so if the operating system is updated from a previous version where those custom packages were installed the packages from the distribution will not be installed.
+
+It would be highly recommended to use the packages provided by the distribution, and using an older version of those packages is not a problem, so when performing an operating system update to Debian 13 or Ubuntu 24.04 the custom packages should be removed.
+
+This could be done by removing `nextcloud-talk-recording` before the operating system update. After the package is removed the no longer needed dependencies, which in this case should be the custom packages, would be orphaned, so they can be removed with `apt-get autoremove`. Note that all this must be done before the operating system update, as after the update other packages could depend on the custom packages and thus it might not be possible to autoremove them.
+
 ## System setup
 
 Independently of how it was installed the recording server needs to be configured. Depending on the setup additional components like a firewall might also need to be setup or adjusted.
@@ -110,6 +161,8 @@ When the recording server is started through its systemd service the configurati
 The configuration file must be edited to set the Nextcloud servers that are allowed to use the recording server, as well as the credentials for the recording server to use the signaling servers of those Nextcloud servers. Please refer to the sections below for the details.
 
 The temporary directory where the videos are stored while being recorded (and if they fail to be uploaded to the Nextcloud server) is `/tmp/`. That directory is typically a temporary file system stored in RAM, so depending on the available RAM and the number of simultaneous recordings it could affect the system or cause some recordings to suddenly fail due to running out of space. This can be customized in `backend->directory` to use a more suitable directory (for example, a directory under the home directory of the user running the recording server).
+
+In Debian 13 and Ubuntu 24.04, if the Selenium package provided by the distribution is used (which it is by default in the pre-built packages and in the packages built with the _build.sh_ script), the Selenium Manager will not be available, so the path to the Selenium driver must be set in `recording->driverPath`. The path to the Selenium driver provided by the default Firefox package is `/usr/bin/geckodriver`.
 
 By default the recording server listens for HTTP requests on `127.0.0.1:8000`. [As described below](#tls-termination-proxy) it is recommended to set up a TLS termination proxy in front of the recording server, and this TLS termination proxy is the one expected to listen on public interfaces. If needed, the IP and port to listen on for HTTP requests can be customized in `http->listen`.
 
@@ -216,7 +269,7 @@ If the recording worked as expected note that there could still be a subtle issu
 
 ### The Selenium driver or the browser can not be found
 
-If the Selenium Manager is not available (for example, when running Linux on arm64/aarch64) when a recording is started Selenium will not be able to find the driver and the recording will fail. When the Selenium Manager is not available the path to the Selenium driver must be explicitly set in the recording server configuration in `recording->driverPath`. In that case the path to the browser may also need to be set in `recording->browserPath` if the Selenium driver is not able to find it.
+If the Selenium Manager is not available (for example, when running Linux on arm64/aarch64, but also on amd64 if not included in the Selenium package) when a recording is started Selenium will not be able to find the driver and the recording will fail. When the Selenium Manager is not available the path to the Selenium driver must be explicitly set in the recording server configuration in `recording->driverPath`. In that case the path to the browser may also need to be set in `recording->browserPath` if the Selenium driver is not able to find it.
 
 Independently of that, even if the Selenium Manager is available, the recording could also fail if `recording->driverPath` or `recording->browserPath` are set to an invalid value. However, in some Selenium versions setting the paths does not fully override the automated handling of Selenium Manager, so if the paths are set to an invalid value the recording could also work due to Selenium Manager still falling back to downloading the driver or the browser.
 
