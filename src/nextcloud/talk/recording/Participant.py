@@ -222,6 +222,7 @@ class SeleniumHelper:
 
         options.add_argument('--kiosk')
         options.add_argument(f'--window-size={width},{height}')
+        options.add_argument('--window-position=0,0')
         options.add_argument('--disable-infobars')
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
 
