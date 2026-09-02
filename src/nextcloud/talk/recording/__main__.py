@@ -39,12 +39,20 @@ def main():
     logging.getLogger('werkzeug').setLevel(config.getLogLevel())
 
     listen = config.getListen()
-    parsed = urlparse(f'//{listen}')
-    host = parsed.hostname
-    port = parsed.port
 
-    if host is None or port is None:
-        raise ValueError(f'Invalid http->listen value: {listen}')
+    try:
+        parsed = urlparse(f'//{listen}')
+
+        host = parsed.hostname
+        port = parsed.port
+
+        if host is None:
+            raise ValueError('No host')
+
+        if port is None:
+            raise ValueError('No port')
+    except ValueError as valueError:
+        raise ValueError(f'Invalid http->listen value ({listen}): {valueError}') from valueError
 
     app.run(host, port, threaded=True)
 

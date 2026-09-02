@@ -6,6 +6,7 @@
 # pylint: disable=missing-docstring
 
 import logging
+import re
 import sys
 
 import pytest
@@ -50,17 +51,29 @@ class MainTest:
         assert capturedArgs['host'] == expectedHost
         assert capturedArgs['port'] == expectedPort
 
-    @pytest.mark.parametrize('listen', [
+    @pytest.mark.parametrize('listen, exceptionMessage', [
+        # A negative lookahead is used when the exception happens even before
+        # the host or port can be checked.
         # Missing port
-        '127.0.0.1',
-        'localhost',
+        ('127.0.0.1', 'No port'),
+        ('localhost', 'No port'),
+        ('[::1]', 'No port'),
+        # Missing host
+        (':8000', 'No host'),
+        # Depending on the Python version parsing the address is acepted as
+        # empty or rejected as invalid, hence the almost useless regexp:
+        # https://github.com/python/cpython/issues/103848
+        # The Python version can not be checked to test one case or the other as
+        # an old version with the previous behaviour might have been patched and
+        # behave as a newer version (like Python 3.8 package in Ubuntu 20.04).
+        ('[]:8000', r'(?!.*No host|.*No port)|No host'),
         # Missing brackets in IPv6 address
-        '::1',
-        '::',
+        ('::1', r'(?!.*No host|.*No port)'),
+        ('::', r'(?!.*No host|.*No port)'),
     ])
-    def testInvalidListenAddress(self, listen, monkeypatch):
+    def testListenInvalidAddress(self, listen, exceptionMessage, monkeypatch):
         monkeypatch.setattr(mainModule.config, 'getListen', lambda: listen)
         monkeypatch.setattr(mainModule.app, 'run', lambda host, port, **kwargs: pytest.fail('The server should not be started'))
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=rf'Invalid http->listen value \({re.escape(listen)}\): {exceptionMessage}'):
             mainModule.main()
