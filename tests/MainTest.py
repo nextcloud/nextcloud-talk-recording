@@ -39,6 +39,9 @@ class MainTest:
         ('[2001:db8:4815::16]:8000',                       '2001:db8:4815::16',                        8000),
         ('[2001:db8::abc]:12345',                          '2001:db8::abc',                           12345),
         ('[2001:0db8:1234:5678:90ab:cdef:1234:5678]:8000', '2001:0db8:1234:5678:90ab:cdef:1234:5678',  8000),
+        # IPv4-mapped IPv6 addresses, not very useful as typically the raw IPv4
+        # address would be used instead, but possible nevertheless
+        ('[::ffff:192.168.0.42]:12345',                    '::ffff:192.168.0.42',                     12345),
     ])
     def testListenAddressParsing(self, listen, expectedHost, expectedPort, monkeypatch):
         monkeypatch.setattr(mainModule.config, 'getListen', lambda: listen)
