@@ -138,6 +138,7 @@ class Service:
 
         self._recordingTimeStart = 0
         self._recordingTimeStop = 0
+        self._recordingTimestampStart = 0
 
     def __del__(self):
         self._stopHelpers()
@@ -233,6 +234,7 @@ class Service:
                 raise Exception("Call joined after recording was stopped")
 
             self._recordingTimeStart = time.monotonic()
+            self._recordingTimestampStart = round(time.time() * 1000)
 
             returnCode = self._process.wait()
 
@@ -289,9 +291,15 @@ class Service:
 
             return
 
+        intervalsFileName = Participant._getIntervalsFileName(self._fileName)
+        intervalsFileName = intervalsFileName if os.path.exists(intervalsFileName) else None
+
         BackendNotifier.uploadRecording(self.backend, self.token, self._fileName, self.owner)
 
         os.remove(self._fileName)
+
+        if intervalsFileName:
+            os.remove(intervalsFileName)
 
     def _stopHelpers(self):
         self._recordingTimeStop = time.monotonic()
@@ -309,7 +317,7 @@ class Service:
         if self._participant:
             self._logger.debug("Disconnecting from signaling server")
             try:
-                self._participant.disconnect()
+                self._participant.disconnect(self._fileName, self._recordingTimestampStart)
             except:
                 self._logger.exception("Error when disconnecting from signaling server")
             finally:

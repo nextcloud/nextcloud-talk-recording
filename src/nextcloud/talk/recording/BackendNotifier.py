@@ -24,6 +24,17 @@ from .Config import config
 
 logger = logging.getLogger(__name__)
 
+def _getIntervalsFileName(fileName):
+    """
+    Returns the sidecar JSON filename matching the given recording file.
+
+    :param fileName: the recording file name.
+    :return: the intervals JSON file name.
+    """
+
+    extensionlessFileName, _ = os.path.splitext(fileName)
+    return extensionlessFileName + '.json'
+
 def getRandomAndChecksum(backend, data):
     """
     Returns a random string and the checksum of the given data with that random.
@@ -193,7 +204,13 @@ def uploadRecording(backend, token, fileName, owner):
     :param owner: the owner of the uploaded file.
     """
 
+    intervalsFileName = _getIntervalsFileName(fileName)
+    intervalsFileName = intervalsFileName if os.path.exists(intervalsFileName) else None
+
     logger.info("Upload recording %s to %s in %s as %s", fileName, backend, token, owner)
+
+    if intervalsFileName:
+        logger.info("Also uploading speaker intervals from %s", intervalsFileName)
 
     uploadShare = requestUpload(backend, token, fileName, owner)
 
@@ -201,16 +218,18 @@ def uploadRecording(backend, token, fileName, owner):
         # The backend does not support chunked uploads or public link sharing is
         # disabled. Fall back to directly uploading the recording in a single
         # request.
-        uploadRecordingDirectly(backend, token, fileName, owner)
+        uploadRecordingDirectly(backend, token, fileName, owner, intervalsFileName)
 
         return
 
-    uploadRecordingInChunks(backend, uploadShare, fileName)
+    uploadRecordingInChunks(backend, uploadShare, fileName, intervalsFileName)
+
+    intervalsBaseName = os.path.basename(intervalsFileName) if intervalsFileName else None
 
     # Once the recording was uploaded and assembled the store endpoint is called
     # with its file name to trigger the post-processing and the notification for
     # the moderators.
-    store(backend, token, uploadShare['fileName'], owner)
+    store(backend, token, uploadShare['fileName'], owner, intervalsBaseName)
 
 def requestUpload(backend, token, fileName, owner):
     """
@@ -268,7 +287,7 @@ def requestUpload(backend, token, fileName, owner):
 
     return response.json()['ocs']['data']
 
-def uploadRecordingInChunks(backend, uploadShare, fileName):
+def uploadRecordingInChunks(backend, uploadShare, fileName, intervalsFileName=None):
     """
     Uploads the recording specified by fileName in chunks to an upload share.
 
@@ -279,6 +298,7 @@ def uploadRecordingInChunks(backend, uploadShare, fileName):
     :param uploadShare: the data of the upload share ("token", "password" and
            "fileName") as returned by requestUpload().
     :param fileName: the recording file name.
+    :param intervalsFileName: optional path to the speaker intervals JSON file.
     """
 
     backendUrl = backend.rstrip('/')
@@ -287,7 +307,7 @@ def uploadRecordingInChunks(backend, uploadShare, fileName):
     sharePassword = uploadShare['password']
     auth = (shareToken, sharePassword)
 
-    # A unique upload directory is used for each upload to prevent conflicts
+    # A unique upload directory is used for all upload to prevent conflicts
     # with leftover chunks from a previous failed upload.
     uploadId = token_urlsafe(32)
     uploadUrl = backendUrl + '/public.php/dav/uploads/' + shareToken + '/' + uploadId
@@ -325,7 +345,38 @@ def uploadRecordingInChunks(backend, uploadShare, fileName):
     # Assemble the uploaded chunks into the final file at the destination.
     doRequest(backend, Request('MOVE', uploadUrl + '/.file', headers, auth=auth))
 
-def store(backend, token, fileName, owner):
+    if intervalsFileName:
+        _uploadSmallFileViaWebDAV(backend, shareToken, sharePassword, intervalsFileName)
+
+def _uploadSmallFileViaWebDAV(backend, shareToken, sharePassword, fileName):
+    """
+    Uploads a small file via a single WebDAV PUT request to the public
+    WebDAV endpoint.
+
+    :param backend: the base URL of the backend.
+    :param shareToken: the token of the upload share.
+    :param sharePassword: the password of the upload share.
+    :param fileName: the file to upload.
+    """
+
+    backendUrl = backend.rstrip('/')
+    auth = (shareToken, sharePassword)
+
+    destinationUrl = backendUrl + '/public.php/dav/files/' + shareToken + '/' + quote(os.path.basename(fileName))
+
+    headers = {
+        'Destination': destinationUrl,
+        'User-Agent': recording.USER_AGENT,
+    }
+
+    # pylint: disable=consider-using-with
+    doRequest(
+        backend,
+        Request('PUT', destinationUrl, headers, data=open(fileName, 'rb'), auth=auth)
+    )
+
+
+def store(backend, token, fileName, owner, intervalsFileName=None):
     """
     Triggers the post-processing of a recording previously uploaded in chunks.
 
@@ -334,14 +385,20 @@ def store(backend, token, fileName, owner):
     :param fileName: the name of the file uploaded through the upload share, as
            returned by requestUpload().
     :param owner: the owner of the uploaded file.
+    :param intervalsFileName: optional base name of the speaker intervals file.
     """
 
     url = backend.rstrip('/') + '/ocs/v2.php/apps/spreed/api/v1/recording/' + token + '/store'
 
-    data = json.dumps({
+    storeData = {
         'owner': owner,
         'fileName': fileName,
-    }).encode()
+    }
+
+    if intervalsFileName:
+        storeData['intervalsFileName'] = intervalsFileName
+
+    data = json.dumps(storeData).encode()
 
     # The checksum is calculated from the conversation token, like in the other
     # recording endpoints.
@@ -360,7 +417,7 @@ def store(backend, token, fileName, owner):
 
     doRequest(backend, request)
 
-def uploadRecordingDirectly(backend, token, fileName, owner):
+def uploadRecordingDirectly(backend, token, fileName, owner, intervalsFileName=None):
     """
     Upload the recording specified by fileName directly in a single request.
 
@@ -374,6 +431,7 @@ def uploadRecordingDirectly(backend, token, fileName, owner):
     :param token: the token of the conversation that was recorded.
     :param fileName: the recording file name.
     :param owner: the owner of the uploaded file.
+    :param intervalsFileName: optional path to the speaker intervals JSON file.
     """
 
     url = backend.rstrip('/') + '/ocs/v2.php/apps/spreed/api/v1/recording/' + token + '/store'
@@ -385,6 +443,10 @@ def uploadRecordingDirectly(backend, token, fileName, owner):
         # pylint: disable=consider-using-with
         'file': (os.path.basename(fileName), open(fileName, 'rb')),
     }
+
+    if intervalsFileName:
+        # pylint: disable=consider-using-with
+        data['intervalsFile'] = (os.path.basename(intervalsFileName), open(intervalsFileName, 'rb'))
 
     multipartEncoder = MultipartEncoder(data)
 
