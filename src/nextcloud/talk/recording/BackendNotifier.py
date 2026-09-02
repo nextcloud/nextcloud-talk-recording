@@ -24,14 +24,14 @@ from .Config import config
 
 logger = logging.getLogger(__name__)
 
-def getRandomAndChecksum(backend, data):
+def getRandomAndChecksum(backendUrl, data):
     """
     Returns a random string and the checksum of the given data with that random.
 
-    :param backend: the backend to send the data to.
+    :param backendUrl: the URL of the backend to send the data to.
     :param data: the data, as bytes.
     """
-    secret = config.getBackendSecret(backend).encode()
+    secret = config.getBackendSecret(backendUrl).encode()
     random = token_urlsafe(64)
     hmacValue = hmac.new(secret, random.encode() + data, hashlib.sha256)
 
@@ -49,18 +49,18 @@ def _isClientError(exception):
 
     return 400 <= exception.response.status_code < 500
 
-def doRequest(backend, request, retries=3):
+def doRequest(backendUrl, request, retries=3):
     """
     Send the request to the backend.
 
     SSL verification will be skipped if configured.
 
-    :param backend: the backend to send the request to.
+    :param backendUrl: the URL of the backend to send the request to.
     :param request: the request to send.
     :param retries: the number of times to retry in case of failure.
     :returns: the response of the request.
     """
-    backendSkipVerify = config.getBackendSkipVerify(backend)
+    backendSkipVerify = config.getBackendSkipVerify(backendUrl)
 
     try:
         session = Session()
@@ -74,12 +74,12 @@ def doRequest(backend, request, retries=3):
         # fail again and is therefore pointless.
         if retries > 1 and not _isClientError(exception):
             logger.exception("Failed to send message to backend, %d retries left!", retries)
-            return doRequest(backend, request, retries - 1)
+            return doRequest(backendUrl, request, retries - 1)
 
         logger.exception("Failed to send message to backend, giving up!")
         raise
 
-def backendRequest(backend, data):
+def backendRequest(backendUrl, data):
     """
     Sends the data to the backend on the endpoint to receive notifications from
     the recording server.
@@ -87,14 +87,14 @@ def backendRequest(backend, data):
     The data is automatically wrapped in a request for the appropriate URL and
     with the needed headers.
 
-    :param backend: the backend to send the data to.
+    :param backendUrl: the URL of the backend to send the data to.
     :param data: the data to send.
     """
-    url = backend.rstrip('/') + '/ocs/v2.php/apps/spreed/api/v1/recording/backend'
+    url = backendUrl.rstrip('/') + '/ocs/v2.php/apps/spreed/api/v1/recording/backend'
 
     data = json.dumps(data).encode()
 
-    random, checksum = getRandomAndChecksum(backend, data)
+    random, checksum = getRandomAndChecksum(backendUrl, data)
 
     headers = {
         'Content-Type': 'application/json',
@@ -106,13 +106,13 @@ def backendRequest(backend, data):
 
     request = Request('POST', url, headers, data=data)
 
-    doRequest(backend, request)
+    doRequest(backendUrl, request)
 
-def started(backend, token, status, actorType, actorId):
+def started(backendUrl, token, status, actorType, actorId):
     """
     Notifies the backend that the recording was started.
 
-    :param backend: the backend of the conversation.
+    :param backendUrl: the URL of the backend of the conversation.
     :param token: the token of the conversation.
     :param actorType: the actor type of the Talk participant that started the
            recording.
@@ -120,7 +120,7 @@ def started(backend, token, status, actorType, actorId):
            recording.
     """
 
-    backendRequest(backend, {
+    backendRequest(backendUrl, {
         'type': 'started',
         'started': {
             'token': token,
@@ -132,11 +132,11 @@ def started(backend, token, status, actorType, actorId):
         },
     })
 
-def stopped(backend, token, actorType, actorId):
+def stopped(backendUrl, token, actorType, actorId):
     """
     Notifies the backend that the recording was stopped.
 
-    :param backend: the backend of the conversation.
+    :param backendUrl: the URL of the backend of the conversation.
     :param token: the token of the conversation.
     :param actorType: the actor type of the Talk participant that stopped the
            recording.
@@ -157,13 +157,13 @@ def stopped(backend, token, actorType, actorId):
             'id': actorId,
         }
 
-    backendRequest(backend, data)
+    backendRequest(backendUrl, data)
 
-def failed(backend, token):
+def failed(backendUrl, token):
     """
     Notifies the backend that the recording failed.
 
-    :param backend: the backend of the conversation.
+    :param backendUrl: the URL of the backend of the conversation.
     :param token: the token of the conversation.
     """
 
@@ -174,9 +174,9 @@ def failed(backend, token):
         },
     }
 
-    backendRequest(backend, data)
+    backendRequest(backendUrl, data)
 
-def uploadRecording(backend, token, fileName, owner):
+def uploadRecording(backendUrl, token, fileName, owner):
     """
     Upload the recording specified by fileName.
 
@@ -187,32 +187,32 @@ def uploadRecording(backend, token, fileName, owner):
     limits enforced on a regular request. Otherwise the recording is uploaded
     directly in a single request as a fallback for older backends.
 
-    :param backend: the backend to upload the file to.
+    :param backendUrl: the URL of the backend to upload the file to.
     :param token: the token of the conversation that was recorded.
     :param fileName: the recording file name.
     :param owner: the owner of the uploaded file.
     """
 
-    logger.info("Upload recording %s to %s in %s as %s", fileName, backend, token, owner)
+    logger.info("Upload recording %s to %s in %s as %s", fileName, backendUrl, token, owner)
 
-    uploadShare = requestUpload(backend, token, fileName, owner)
+    uploadShare = requestUpload(backendUrl, token, fileName, owner)
 
     if uploadShare is None:
         # The backend does not support chunked uploads or public link sharing is
         # disabled. Fall back to directly uploading the recording in a single
         # request.
-        uploadRecordingDirectly(backend, token, fileName, owner)
+        uploadRecordingDirectly(backendUrl, token, fileName, owner)
 
         return
 
-    uploadRecordingInChunks(backend, uploadShare, fileName)
+    uploadRecordingInChunks(backendUrl, uploadShare, fileName)
 
     # Once the recording was uploaded and assembled the store endpoint is called
     # with its file name to trigger the post-processing and the notification for
     # the moderators.
-    store(backend, token, uploadShare['fileName'], owner)
+    store(backendUrl, token, uploadShare['fileName'], owner)
 
-def requestUpload(backend, token, fileName, owner):
+def requestUpload(backendUrl, token, fileName, owner):
     """
     Requests a temporary upload share to upload a recording in chunks.
 
@@ -222,13 +222,13 @@ def requestUpload(backend, token, fileName, owner):
     the backend does not allow them, for example if public sharing is disabled
     (400).
 
-    :param backend: the backend to request the upload share from.
+    :param backendUrl: the URL of the backend to request the upload share from.
     :param token: the token of the conversation that was recorded.
     :param fileName: the recording file name.
     :param owner: the owner of the uploaded file.
     """
 
-    url = backend.rstrip('/') + '/ocs/v2.php/apps/spreed/api/v1/recording/' + token + '/request-upload'
+    url = backendUrl.rstrip('/') + '/ocs/v2.php/apps/spreed/api/v1/recording/' + token + '/request-upload'
 
     data = json.dumps({
         'owner': owner,
@@ -237,7 +237,7 @@ def requestUpload(backend, token, fileName, owner):
 
     # The checksum is calculated from the conversation token, like in the other
     # recording endpoints.
-    random, checksum = getRandomAndChecksum(backend, token.encode())
+    random, checksum = getRandomAndChecksum(backendUrl, token.encode())
 
     headers = {
         'Content-Type': 'application/json',
@@ -251,16 +251,16 @@ def requestUpload(backend, token, fileName, owner):
     request = Request('POST', url, headers, data=data)
 
     try:
-        response = doRequest(backend, request)
+        response = doRequest(backendUrl, request)
     except HTTPError as httpError:
         if httpError.response is not None and httpError.response.status_code == 404:
-            logger.info("Backend %s does not support chunked recording uploads, uploading directly", backend)
+            logger.info("Backend %s does not support chunked recording uploads, uploading directly", backendUrl)
 
             return None
 
         if httpError.response is not None and httpError.response.status_code == 400:
             logger.info("Backend %s does not allow chunked recording uploads (public sharing may be "
-                        "disabled), uploading directly", backend)
+                        "disabled), uploading directly", backendUrl)
 
             return None
 
@@ -268,20 +268,20 @@ def requestUpload(backend, token, fileName, owner):
 
     return response.json()['ocs']['data']
 
-def uploadRecordingInChunks(backend, uploadShare, fileName):
+def uploadRecordingInChunks(backendUrl, uploadShare, fileName):
     """
     Uploads the recording specified by fileName in chunks to an upload share.
 
     The recording is uploaded through the chunked public WebDAV API, using the
     upload share token as the user and its password as the password.
 
-    :param backend: the backend to upload the file to.
+    :param backendUrl: the URL of the backend to upload the file to.
     :param uploadShare: the data of the upload share ("token", "password" and
            "fileName") as returned by requestUpload().
     :param fileName: the recording file name.
     """
 
-    backendUrl = backend.rstrip('/')
+    backendUrl = backendUrl.rstrip('/')
 
     shareToken = uploadShare['token']
     sharePassword = uploadShare['password']
@@ -304,12 +304,12 @@ def uploadRecordingInChunks(backend, uploadShare, fileName):
     }
 
     # Initialize the chunked upload.
-    doRequest(backend, Request('MKCOL', uploadUrl, headers, auth=auth))
+    doRequest(backendUrl, Request('MKCOL', uploadUrl, headers, auth=auth))
 
     # Upload the recording in chunks. Chunks are named with sequential numbers
     # starting at 1, which is the order in which they are assembled into the
     # final file.
-    chunkSize = config.getBackendUploadChunkSize(backend)
+    chunkSize = config.getBackendUploadChunkSize(backendUrl)
     chunkNumber = 0
     with open(fileName, 'rb') as fileToUpload:
         while True:
@@ -320,23 +320,23 @@ def uploadRecordingInChunks(backend, uploadShare, fileName):
             chunkNumber += 1
             chunkUrl = uploadUrl + '/' + str(chunkNumber)
 
-            doRequest(backend, Request('PUT', chunkUrl, headers, data=chunk, auth=auth))
+            doRequest(backendUrl, Request('PUT', chunkUrl, headers, data=chunk, auth=auth))
 
     # Assemble the uploaded chunks into the final file at the destination.
-    doRequest(backend, Request('MOVE', uploadUrl + '/.file', headers, auth=auth))
+    doRequest(backendUrl, Request('MOVE', uploadUrl + '/.file', headers, auth=auth))
 
-def store(backend, token, fileName, owner):
+def store(backendUrl, token, fileName, owner):
     """
     Triggers the post-processing of a recording previously uploaded in chunks.
 
-    :param backend: the backend to store the recording in.
+    :param backendUrl: the URL of the backend to store the recording in.
     :param token: the token of the conversation that was recorded.
     :param fileName: the name of the file uploaded through the upload share, as
            returned by requestUpload().
     :param owner: the owner of the uploaded file.
     """
 
-    url = backend.rstrip('/') + '/ocs/v2.php/apps/spreed/api/v1/recording/' + token + '/store'
+    url = backendUrl.rstrip('/') + '/ocs/v2.php/apps/spreed/api/v1/recording/' + token + '/store'
 
     data = json.dumps({
         'owner': owner,
@@ -345,7 +345,7 @@ def store(backend, token, fileName, owner):
 
     # The checksum is calculated from the conversation token, like in the other
     # recording endpoints.
-    random, checksum = getRandomAndChecksum(backend, token.encode())
+    random, checksum = getRandomAndChecksum(backendUrl, token.encode())
 
     headers = {
         'Content-Type': 'application/json',
@@ -358,9 +358,9 @@ def store(backend, token, fileName, owner):
 
     request = Request('POST', url, headers, data=data)
 
-    doRequest(backend, request)
+    doRequest(backendUrl, request)
 
-def uploadRecordingDirectly(backend, token, fileName, owner):
+def uploadRecordingDirectly(backendUrl, token, fileName, owner):
     """
     Upload the recording specified by fileName directly in a single request.
 
@@ -370,13 +370,13 @@ def uploadRecordingDirectly(backend, token, fileName, owner):
     thus can not upload recordings larger than the limits enforced on a regular
     request.
 
-    :param backend: the backend to upload the file to.
+    :param backendUrl: the URL of the backend to upload the file to.
     :param token: the token of the conversation that was recorded.
     :param fileName: the recording file name.
     :param owner: the owner of the uploaded file.
     """
 
-    url = backend.rstrip('/') + '/ocs/v2.php/apps/spreed/api/v1/recording/' + token + '/store'
+    url = backendUrl.rstrip('/') + '/ocs/v2.php/apps/spreed/api/v1/recording/' + token + '/store'
 
     # Plain values become arguments, while tuples become files; the body used to
     # calculate the checksum is empty.
@@ -388,7 +388,7 @@ def uploadRecordingDirectly(backend, token, fileName, owner):
 
     multipartEncoder = MultipartEncoder(data)
 
-    random, checksum = getRandomAndChecksum(backend, token.encode())
+    random, checksum = getRandomAndChecksum(backendUrl, token.encode())
 
     headers = {
         'Content-Type': multipartEncoder.content_type,
@@ -400,4 +400,4 @@ def uploadRecordingDirectly(backend, token, fileName, owner):
 
     uploadRequest = Request('POST', url, headers, data=multipartEncoder)
 
-    doRequest(backend, uploadRequest)
+    doRequest(backendUrl, uploadRequest)

@@ -196,6 +196,18 @@ class Config:
         """
         return self._trustedProxies
 
+    def getBackendId(self, backendUrl):
+        """
+        Returns the id of the backend with the given URL.
+
+        If there is no backend with the given URL the URL itself is returned.
+        """
+        backendUrl = backendUrl.rstrip('/')
+        if backendUrl in self._backendIdsByBackendUrl:
+            return self._backendIdsByBackendUrl[backendUrl]
+
+        return backendUrl
+
     def getBackendSecret(self, backendUrl):
         """
         Returns the shared secret for requests from and to the backend servers.
