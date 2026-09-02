@@ -101,6 +101,8 @@ The recording server has the following non-Python dependencies:
 
 Those dependencies must be installed, typically using the package manager of the distribution, in the system running the recording server.
 
+You may also want to install the Noto fonts, again typically using the package manager of the distribution, to ensure that non-latin characters are properly shown in the recordings (for example, in participant names).
+
 Then, the recording server and all its Python dependencies can be installed using Python pip. Note that the recording server is not available in the Python Package Index (PyPI); you need to manually clone the git repository and then install it from there:
 ```
 git clone https://github.com/nextcloud/nextcloud-talk-recording
