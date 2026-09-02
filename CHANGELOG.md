@@ -5,6 +5,25 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-09-02
+### Added
+
+- Implement chunked uploads of recording files [#95](https://github.com/nextcloud/nextcloud-talk-recording/pull/95)
+- Add support for building packages for Debian 12, Debian 13 and Ubuntu 24.04 [#102](https://github.com/nextcloud/nextcloud-talk-recording/pull/102)
+
+### Fixed
+
+- Treat `https://` and `wss://` as equivalent in signaling URL [#85](https://github.com/nextcloud/nextcloud-talk-recording/pull/85)
+- Show error message when URLs are duplicated in the configuration [#86](https://github.com/nextcloud/nextcloud-talk-recording/pull/86)
+- Correctly parse IPv6 addresses in `http->listen` [#81](https://github.com/nextcloud/nextcloud-talk-recording/pull/81)
+- Fix cropped browser window when using Chromium [#107](https://github.com/nextcloud/nextcloud-talk-recording/pull/107)
+- Fix missing characters in recorded video due to missing fonts in built packages [#108](https://github.com/nextcloud/nextcloud-talk-recording/pull/108)
+
+### Changed
+
+- Use backend ID as backend label in Prometheus metrics [#106](https://github.com/nextcloud/nextcloud-talk-recording/pull/106)
+- Use home directory under _/var/lib_ instead of _/home/nextcloud-talk-recording_ in built packages [#99](https://github.com/nextcloud/nextcloud-talk-recording/pull/99)
+
 ## [0.2.1] - 2025-11-13
 ### Fixed
 
