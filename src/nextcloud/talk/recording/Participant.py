@@ -553,15 +553,31 @@ class Participant():
             window.speakerEvents = [];
             window._speakingParticipants = {};
 
+            window._getParticipantInfo = function(sessionId) {
+                var joinedUsers = (OCA.Talk.SimpleWebRTC.connection && OCA.Talk.SimpleWebRTC.connection.joinedUsers) || {};
+                for (var participantId in joinedUsers) {
+                    var joinedUser = joinedUsers[participantId];
+                    if (joinedUser && joinedUser.sessionid === sessionId) {
+                        return {
+                            participantName: '' + (((joinedUser.user || {}).displayname) || ''),
+                            participantUserId: '' + (joinedUser.userid || '')
+                        };
+                    }
+                }
+                return { participantName: '', participantUserId: '' };
+            };
+
             if (OCA.Talk.SimpleWebRTC) {
                 OCA.Talk.SimpleWebRTC.on('channelMessage', function(peer, label, data) {
                     if (data.type === 'speaking') {
                         var key = peer.id;
                         if (!window._speakingParticipants[key]) {
                             window._speakingParticipants[key] = Date.now();
+                            var info = window._getParticipantInfo(peer.id);
                             window.speakerEvents.push({
                                 participantId: peer.id,
-                                participantName: '' + (peer.nick || ''),
+                                participantName: info.participantName,
+                                participantUserId: info.participantUserId,
                                 startTimestamp: Date.now(),
                                 stopTimestamp: null
                             });
@@ -587,9 +603,11 @@ class Participant():
                         var key = event.sessionid;
                         if (isSpeaking && !window._speakingParticipants[key]) {
                             window._speakingParticipants[key] = Date.now();
+                            var info = window._getParticipantInfo(event.sessionid);
                             window.speakerEvents.push({
                                 participantId: event.sessionid,
-                                participantName: '',
+                                participantName: info.participantName,
+                                participantUserId: info.participantUserId,
                                 startTimestamp: Date.now(),
                                 stopTimestamp: null
                             });
