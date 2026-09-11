@@ -580,7 +580,9 @@ class Participant():
                                 participantName: info.participantName,
                                 participantUserId: info.participantUserId,
                                 startTimestamp: Date.now(),
-                                stopTimestamp: null
+                                stopTimestamp: null,
+                                startType: 'speaking',
+                                stopType: null
                             });
                         }
                     } else if (data.type === 'stoppedSpeaking') {
@@ -589,6 +591,7 @@ class Participant():
                             for (var i = window.speakerEvents.length - 1; i >= 0; i--) {
                                 if (window.speakerEvents[i].participantId === key && window.speakerEvents[i].stopTimestamp === null) {
                                     window.speakerEvents[i].stopTimestamp = Date.now();
+                                    window.speakerEvents[i].stopType = 'stoppedSpeaking';
                                     break;
                                 }
                             }
@@ -610,12 +613,15 @@ class Participant():
                                 participantName: info.participantName,
                                 participantUserId: info.participantUserId,
                                 startTimestamp: Date.now(),
-                                stopTimestamp: null
+                                stopTimestamp: null,
+                                startType: 'participantFlagsChanged',
+                                stopType: null
                             });
                         } else if (!isSpeaking && window._speakingParticipants[key]) {
                             for (var i = window.speakerEvents.length - 1; i >= 0; i--) {
                                 if (window.speakerEvents[i].participantId === key && window.speakerEvents[i].stopTimestamp === null) {
                                     window.speakerEvents[i].stopTimestamp = Date.now();
+                                    window.speakerEvents[i].stopType = 'participantFlagsChanged';
                                     break;
                                 }
                             }
@@ -631,6 +637,7 @@ class Participant():
                                 for (var i = window.speakerEvents.length - 1; i >= 0; i--) {
                                     if (window.speakerEvents[i].participantId === key && window.speakerEvents[i].stopTimestamp === null) {
                                         window.speakerEvents[i].stopTimestamp = now;
+                                        window.speakerEvents[i].stopType = 'usersLeft';
                                         break;
                                     }
                                 }
@@ -647,9 +654,9 @@ class Participant():
         Retrieves and clears the accumulated speaker events from the browser.
 
         :return: a list of dicts with keys participantId, participantName,
-                 startTimestamp, stopTimestamp (stopTimestamp may be None if
-                 the participant was still speaking when the event was
-                 retrieved).
+                 startTimestamp, stopTimestamp, startType, stopType
+                 (stopTimestamp may be None if the participant was still
+                 speaking when the event was retrieved).
         """
 
         result = self.seleniumHelper.execute('''
@@ -658,6 +665,7 @@ class Participant():
             for (var i = 0; i < events.length; i++) {
                 if (events[i].stopTimestamp === null) {
                     events[i].stopTimestamp = now;
+                    events[i].stopType = 'stillSpeaking';
                 }
             }
             window.speakerEvents = [];
@@ -691,12 +699,17 @@ class Participant():
             participantId = event.get('participantId', '?')
             displayName = name if name else participantId
 
+            startType = event.get('startType', '?')
+            stopType = event.get('stopType', '?')
+
             self.seleniumHelper._parentLogger.info(
-                "  %s (%s): %s - %s (%.1fs)",
+                "  %s (%s): %s (%s) - %s (%s) (%.1fs)",
                 displayName,
                 participantId,
                 startStr,
+                startType,
                 stopStr,
+                stopType,
                 durationSec
             )
 
@@ -731,12 +744,17 @@ class Participant():
             participantId = event.get('participantId', '?')
             displayName = name if name else participantId
 
+            startType = event.get('startType', '?')
+            stopType = event.get('stopType', '?')
+
             self.seleniumHelper._parentLogger.info(
-                "  %s (%s): %s - %s (%.1fs)",
+                "  %s (%s): %s (%s) - %s (%s) (%.1fs)",
                 displayName,
                 participantId,
                 startStr,
+                startType,
                 stopStr,
+                stopType,
                 durationSec
             )
 
