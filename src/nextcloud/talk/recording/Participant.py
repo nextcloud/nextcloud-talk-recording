@@ -629,23 +629,35 @@ class Participant():
                         }
                     });
 
-                    OCA.Talk.SimpleWebRTC.connection.on('usersLeft', function(users) {
-                        var now = Date.now();
-                        users.forEach(function(user) {
-                            var key = user.sessionId || user.sessionid;
-                            if (window._speakingParticipants[key]) {
-                                for (var i = window.speakerEvents.length - 1; i >= 0; i--) {
-                                    if (window.speakerEvents[i].participantId === key && window.speakerEvents[i].stopTimestamp === null) {
-                                        window.speakerEvents[i].stopTimestamp = now;
-                                        window.speakerEvents[i].stopType = 'usersLeft';
-                                        break;
-                                    }
-                                }
-                                delete window._speakingParticipants[key];
-                            }
-                        });
-                    });
                 }
+
+                OCA.Talk.SimpleWebRTC.on('peerEnded', function(peer) {
+                    var key = peer.id;
+                    if (window._speakingParticipants[key]) {
+                        for (var i = window.speakerEvents.length - 1; i >= 0; i--) {
+                            if (window.speakerEvents[i].participantId === key && window.speakerEvents[i].stopTimestamp === null) {
+                                window.speakerEvents[i].stopTimestamp = Date.now();
+                                window.speakerEvents[i].stopType = 'peerEnded';
+                                break;
+                            }
+                        }
+                        delete window._speakingParticipants[key];
+                    }
+                });
+
+                OCA.Talk.SimpleWebRTC.on('peerStreamRemoved', function(peer) {
+                    var key = peer.id;
+                    if (window._speakingParticipants[key]) {
+                        for (var i = window.speakerEvents.length - 1; i >= 0; i--) {
+                            if (window.speakerEvents[i].participantId === key && window.speakerEvents[i].stopTimestamp === null) {
+                                window.speakerEvents[i].stopTimestamp = Date.now();
+                                window.speakerEvents[i].stopType = 'peerStreamRemoved';
+                                break;
+                            }
+                        }
+                        delete window._speakingParticipants[key];
+                    }
+                });
             }
         ''')
 
