@@ -21,19 +21,9 @@ from requests_toolbelt import MultipartEncoder
 
 from nextcloud.talk import recording
 from .Config import config
+from .Participant import Participant
 
 logger = logging.getLogger(__name__)
-
-def _getIntervalsFileName(fileName):
-    """
-    Returns the sidecar JSON filename matching the given recording file.
-
-    :param fileName: the recording file name.
-    :return: the intervals JSON file name.
-    """
-
-    extensionlessFileName, _ = os.path.splitext(fileName)
-    return extensionlessFileName + ' speaking times.json'
 
 def getRandomAndChecksum(backendUrl, data):
     """
@@ -204,7 +194,7 @@ def uploadRecording(backendUrl, token, fileName, owner):
     :param owner: the owner of the uploaded file.
     """
 
-    intervalsFileName = _getIntervalsFileName(fileName)
+    intervalsFileName = Participant._getIntervalsFileName(fileName)
     intervalsFileName = intervalsFileName if os.path.exists(intervalsFileName) else None
 
     logger.info("Upload recording %s to %s in %s as %s", fileName, backendUrl, token, owner)
@@ -304,7 +294,7 @@ def uploadRecordingInChunks(backendUrl, uploadShare, fileName):
     sharePassword = uploadShare['password']
     auth = (shareToken, sharePassword)
 
-    intervalsFileName = _getIntervalsFileName(fileName)
+    intervalsFileName = Participant._getIntervalsFileName(fileName)
     intervalsFileName = intervalsFileName if os.path.exists(intervalsFileName) else None
 
     # A unique upload directory is used for all upload to prevent conflicts
@@ -389,7 +379,7 @@ def store(backendUrl, token, fileName, owner):
 
     url = backendUrl.rstrip('/') + '/ocs/v2.php/apps/spreed/api/v1/recording/' + token + '/store'
 
-    intervalsBaseName = os.path.basename(_getIntervalsFileName(fileName))
+    intervalsBaseName = os.path.basename(Participant._getIntervalsFileName(fileName))
 
     storeData = {
         'owner': owner,
@@ -434,7 +424,7 @@ def uploadRecordingDirectly(backendUrl, token, fileName, owner):
 
     url = backendUrl.rstrip('/') + '/ocs/v2.php/apps/spreed/api/v1/recording/' + token + '/store'
 
-    intervalsFileName = _getIntervalsFileName(fileName)
+    intervalsFileName = Participant._getIntervalsFileName(fileName)
     intervalsFileName = intervalsFileName if os.path.exists(intervalsFileName) else None
 
     # Plain values become arguments, while tuples become files; the body used to

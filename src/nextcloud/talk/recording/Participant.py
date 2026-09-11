@@ -494,7 +494,9 @@ class Participant():
         """
 
         extensionlessFileName, _ = os.path.splitext(recordingFileName)
-        return extensionlessFileName + ' speaking times.json'
+        directory = os.path.dirname(extensionlessFileName)
+        baseName = os.path.basename(extensionlessFileName)
+        return os.path.join(directory, '.' + baseName + ' speaking times.json')
 
     def joinCall(self, token):
         """
