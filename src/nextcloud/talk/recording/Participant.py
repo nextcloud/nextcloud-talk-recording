@@ -655,6 +655,7 @@ class Participant():
                     // that the participant stopped speaking, as the audio is
                     // not related to the screen sharing peer.
                     if (peer.type !== 'video') {
+                        console.debug('Ignoring peerEnded of', peer.type, 'peer', peer.id);
                         return;
                     }
 
