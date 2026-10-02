@@ -212,12 +212,12 @@ def uploadRecording(backendUrl, token, fileName, owner):
 
         return
 
-    uploadRecordingInChunks(backendUrl, uploadShare, fileName)
+    intervalsUploaded = uploadRecordingInChunks(backendUrl, uploadShare, fileName)
 
     # Once the recording was uploaded and assembled the store endpoint is called
     # with its file name to trigger the post-processing and the notification for
     # the moderators.
-    store(backendUrl, token, uploadShare['fileName'], owner)
+    store(backendUrl, token, uploadShare['fileName'], owner, intervalsUploaded)
 
 def requestUpload(backendUrl, token, fileName, owner):
     """
@@ -286,6 +286,8 @@ def uploadRecordingInChunks(backendUrl, uploadShare, fileName):
     :param uploadShare: the data of the upload share ("token", "password" and
            "fileName") as returned by requestUpload().
     :param fileName: the recording file name.
+    :returns: whether the speaker intervals sidecar was uploaded alongside the
+              recording.
     """
 
     backendUrl = backendUrl.rstrip('/')
@@ -346,8 +348,11 @@ def uploadRecordingInChunks(backendUrl, uploadShare, fileName):
         # prevent the recording (already assembled) from being stored.
         try:
             _uploadSmallFileViaWebDAV(backendUrl, shareToken, sharePassword, intervalsFileName, intervalsUploadName)
+            return True
         except Exception:
             logger.exception("Failed to upload the speaker intervals file, storing the recording without it")
+
+    return False
 
 def _uploadSmallFileViaWebDAV(backendUrl, shareToken, sharePassword, fileName, uploadName=None):
     """
@@ -382,7 +387,7 @@ def _uploadSmallFileViaWebDAV(backendUrl, shareToken, sharePassword, fileName, u
     )
 
 
-def store(backendUrl, token, fileName, owner):
+def store(backendUrl, token, fileName, owner, intervalsUploaded=False):
     """
     Triggers the post-processing of a recording previously uploaded in chunks.
 
@@ -391,17 +396,20 @@ def store(backendUrl, token, fileName, owner):
     :param fileName: the name of the file uploaded through the upload share, as
            returned by requestUpload().
     :param owner: the owner of the uploaded file.
+    :param intervalsUploaded: whether the speaker intervals sidecar was also
+           uploaded through the same share (with a name derived from
+           "fileName"), in which case that name is reported.
     """
 
     url = backendUrl.rstrip('/') + '/ocs/v2.php/apps/spreed/api/v1/recording/' + token + '/store'
 
-    intervalsBaseName = os.path.basename(Participant.getIntervalsFileName(fileName))
-
     storeData = {
         'owner': owner,
         'fileName': fileName,
-        'intervalsFileName': intervalsBaseName,
     }
+
+    if intervalsUploaded:
+        storeData['intervalsFileName'] = os.path.basename(Participant.getIntervalsFileName(fileName))
 
     data = json.dumps(storeData).encode()
 
