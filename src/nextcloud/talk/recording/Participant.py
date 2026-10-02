@@ -572,6 +572,13 @@ class Participant():
 
             if (OCA.Talk.SimpleWebRTC) {
                 OCA.Talk.SimpleWebRTC.on('channelMessage', function(peer, label, data) {
+                    // Speaking state messages are sent through the "status"
+                    // data channel, so other channels (like "chat" or
+                    // "fileTransfer") are not relevant here.
+                    if (label !== 'status') {
+                        return;
+                    }
+
                     if (data.type === 'speaking') {
                         var key = peer.id;
                         if (!window._speakingParticipants[key]) {
