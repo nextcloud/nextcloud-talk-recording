@@ -297,7 +297,7 @@ def uploadRecordingInChunks(backendUrl, uploadShare, fileName):
     intervalsFileName = Participant._getIntervalsFileName(fileName)
     intervalsFileName = intervalsFileName if os.path.exists(intervalsFileName) else None
 
-    # A unique upload directory is used for all upload to prevent conflicts
+    # A unique upload directory is used for each upload to prevent conflicts
     # with leftover chunks from a previous failed upload.
     uploadId = token_urlsafe(32)
     uploadUrl = backendUrl + '/public.php/dav/uploads/' + shareToken + '/' + uploadId
@@ -336,9 +336,15 @@ def uploadRecordingInChunks(backendUrl, uploadShare, fileName):
     doRequest(backendUrl, Request('MOVE', uploadUrl + '/.file', headers, auth=auth))
 
     if intervalsFileName:
-        _uploadSmallFileViaWebDAV(backendUrl, shareToken, sharePassword, intervalsFileName)
+        # The recording is assembled with the file name chosen by the backend,
+        # which is also the one reported when storing the recording, so the
+        # intervals file needs to be uploaded with a name based on it (not on
+        # the local file name) in order to match what the backend expects.
+        intervalsUploadName = os.path.basename(Participant._getIntervalsFileName(uploadShare['fileName']))
 
-def _uploadSmallFileViaWebDAV(backendUrl, shareToken, sharePassword, fileName):
+        _uploadSmallFileViaWebDAV(backendUrl, shareToken, sharePassword, intervalsFileName, intervalsUploadName)
+
+def _uploadSmallFileViaWebDAV(backendUrl, shareToken, sharePassword, fileName, uploadName=None):
     """
     Uploads a small file via a single WebDAV PUT request to the public
     WebDAV endpoint.
@@ -347,12 +353,17 @@ def _uploadSmallFileViaWebDAV(backendUrl, shareToken, sharePassword, fileName):
     :param shareToken: the token of the upload share.
     :param sharePassword: the password of the upload share.
     :param fileName: the file to upload.
+    :param uploadName: if given, the name to use for the file in the upload
+        share instead of the base name of the file to upload.
     """
 
     backendUrl = backendUrl.rstrip('/')
     auth = (shareToken, sharePassword)
 
-    destinationUrl = backendUrl + '/public.php/dav/files/' + shareToken + '/' + quote(os.path.basename(fileName))
+    if uploadName is None:
+        uploadName = os.path.basename(fileName)
+
+    destinationUrl = backendUrl + '/public.php/dav/files/' + shareToken + '/' + quote(uploadName)
 
     headers = {
         'Destination': destinationUrl,
