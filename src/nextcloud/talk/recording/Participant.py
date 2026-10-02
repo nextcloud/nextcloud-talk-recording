@@ -475,6 +475,8 @@ class Participant():
 
         acceptInsecureCerts = config.getBackendSkipVerify(self.nextcloudUrl)
 
+        self._parentLogger = parentLogger
+
         self.seleniumHelper = SeleniumHelper(parentLogger, acceptInsecureCerts)
 
         if browser == 'chrome':
@@ -485,7 +487,7 @@ class Participant():
             raise Exception('Invalid browser: ' + browser)
 
     @staticmethod
-    def _getIntervalsFileName(recordingFileName):
+    def getIntervalsFileName(recordingFileName):
         """
         Returns the sidecar JSON filename matching the given recording file.
 
@@ -679,10 +681,10 @@ class Participant():
         ''')
 
         if trackingResult == 'noSimpleWebRTC':
-            self.seleniumHelper._parentLogger.warning("SimpleWebRTC is not available, speaking intervals will not be tracked")
+            self._parentLogger.warning("SimpleWebRTC is not available, speaking intervals will not be tracked")
 
         elif trackingResult == 'noSignalingConnection':
-            self.seleniumHelper._parentLogger.warning("Signaling connection is not available, speaking intervals of SIP participants will not be tracked")
+            self._parentLogger.warning("Signaling connection is not available, speaking intervals of SIP participants will not be tracked")
 
     def getSpeakerEvents(self):
         """
@@ -726,7 +728,7 @@ class Participant():
         events = self.getSpeakerEvents()
 
         if not events:
-            self.seleniumHelper._parentLogger.info("No speaker activity detected during recording")
+            self._parentLogger.info("No speaker activity detected during recording")
             return
 
         self._logSpeakerEvents(events)
@@ -738,7 +740,7 @@ class Participant():
         :param events: the list of speaker events to log.
         """
 
-        self.seleniumHelper._parentLogger.info("Speaker activity during recording (%d intervals):", len(events))
+        self._parentLogger.info("Speaker activity during recording (%d intervals):", len(events))
 
         for event in events:
             startMs = event.get('startTimestamp', 0)
@@ -754,7 +756,7 @@ class Participant():
             startType = event.get('startType', '?')
             stopType = event.get('stopType', '?')
 
-            self.seleniumHelper._parentLogger.info(
+            self._parentLogger.info(
                 "  %s (%s): %s (%s) - %s (%s) (%.1fs)",
                 displayName,
                 participantId,
@@ -780,7 +782,7 @@ class Participant():
         events = self.getSpeakerEvents()
 
         if not events:
-            self.seleniumHelper._parentLogger.info("No speaker activity detected during recording")
+            self._parentLogger.info("No speaker activity detected during recording")
             return False
 
         self._logSpeakerEvents(events)
@@ -800,7 +802,7 @@ class Participant():
         with open(fileName, 'w', encoding='utf-8') as f:
             json.dump(document, f, indent=2)
 
-        self.seleniumHelper._parentLogger.info("Speaker intervals saved to %s", fileName)
+        self._parentLogger.info("Speaker intervals saved to %s", fileName)
 
         return True
 
@@ -816,7 +818,7 @@ class Participant():
         """
 
         if recordingFileName:
-            self.saveSpeakerEventsToFile(self._getIntervalsFileName(recordingFileName), recordingStartTimestamp)
+            self.saveSpeakerEventsToFile(self.getIntervalsFileName(recordingFileName), recordingStartTimestamp)
         else:
             self.logSpeakerEvents()
 

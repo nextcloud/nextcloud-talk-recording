@@ -194,7 +194,7 @@ def uploadRecording(backendUrl, token, fileName, owner):
     :param owner: the owner of the uploaded file.
     """
 
-    intervalsFileName = Participant._getIntervalsFileName(fileName)
+    intervalsFileName = Participant.getIntervalsFileName(fileName)
     intervalsFileName = intervalsFileName if os.path.exists(intervalsFileName) else None
 
     logger.info("Upload recording %s to %s in %s as %s", fileName, backendUrl, token, owner)
@@ -294,7 +294,7 @@ def uploadRecordingInChunks(backendUrl, uploadShare, fileName):
     sharePassword = uploadShare['password']
     auth = (shareToken, sharePassword)
 
-    intervalsFileName = Participant._getIntervalsFileName(fileName)
+    intervalsFileName = Participant.getIntervalsFileName(fileName)
     intervalsFileName = intervalsFileName if os.path.exists(intervalsFileName) else None
 
     # A unique upload directory is used for each upload to prevent conflicts
@@ -340,7 +340,7 @@ def uploadRecordingInChunks(backendUrl, uploadShare, fileName):
         # which is also the one reported when storing the recording, so the
         # intervals file needs to be uploaded with a name based on it (not on
         # the local file name) in order to match what the backend expects.
-        intervalsUploadName = os.path.basename(Participant._getIntervalsFileName(uploadShare['fileName']))
+        intervalsUploadName = os.path.basename(Participant.getIntervalsFileName(uploadShare['fileName']))
 
         _uploadSmallFileViaWebDAV(backendUrl, shareToken, sharePassword, intervalsFileName, intervalsUploadName)
 
@@ -390,7 +390,7 @@ def store(backendUrl, token, fileName, owner):
 
     url = backendUrl.rstrip('/') + '/ocs/v2.php/apps/spreed/api/v1/recording/' + token + '/store'
 
-    intervalsBaseName = os.path.basename(Participant._getIntervalsFileName(fileName))
+    intervalsBaseName = os.path.basename(Participant.getIntervalsFileName(fileName))
 
     storeData = {
         'owner': owner,
@@ -435,7 +435,7 @@ def uploadRecordingDirectly(backendUrl, token, fileName, owner):
 
     url = backendUrl.rstrip('/') + '/ocs/v2.php/apps/spreed/api/v1/recording/' + token + '/store'
 
-    intervalsFileName = Participant._getIntervalsFileName(fileName)
+    intervalsFileName = Participant.getIntervalsFileName(fileName)
     intervalsFileName = intervalsFileName if os.path.exists(intervalsFileName) else None
 
     # Plain values become arguments, while tuples become files; the body used to

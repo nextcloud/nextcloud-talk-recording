@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 #
 
-# pylint: disable=missing-docstring,invalid-name,protected-access
+# pylint: disable=missing-docstring,invalid-name,unused-argument
 
 import json
 import logging
@@ -20,20 +20,20 @@ class FakeParticipant(Participant):
 
     # pylint: disable=super-init-not-called
     def __init__(self, events):
+        self._parentLogger = logging.getLogger('FakeParticipant')
         self.seleniumHelper = SimpleNamespace(
             execute=lambda script: events,
-            _parentLogger=logging.getLogger('FakeParticipant'),
         )
 
 
 class ParticipantTest:
 
     def testGetIntervalsFileName(self):
-        assert Participant._getIntervalsFileName('Recording 2026-10-02 17-37-20.webm') == \
+        assert Participant.getIntervalsFileName('Recording 2026-10-02 17-37-20.webm') == \
             '.Recording 2026-10-02 17-37-20 speaking times.json'
 
     def testGetIntervalsFileNameWithDirectory(self):
-        assert Participant._getIntervalsFileName('/tmp/httpstest1plutonminifoxfr/cmp5dqnk/Recording x.mp4') == \
+        assert Participant.getIntervalsFileName('/tmp/httpstest1plutonminifoxfr/cmp5dqnk/Recording x.mp4') == \
             '/tmp/httpstest1plutonminifoxfr/cmp5dqnk/.Recording x speaking times.json'
 
     def testSaveSpeakerEventsToFile(self, tmp_path):

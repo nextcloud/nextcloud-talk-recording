@@ -292,7 +292,7 @@ class Service:
 
             return
 
-        intervalsFileName = Participant._getIntervalsFileName(self._fileName)
+        intervalsFileName = Participant.getIntervalsFileName(self._fileName)
         intervalsFileName = intervalsFileName if os.path.exists(intervalsFileName) else None
 
         BackendNotifier.uploadRecording(self.backendUrl, self.token, self._fileName, self.owner)
