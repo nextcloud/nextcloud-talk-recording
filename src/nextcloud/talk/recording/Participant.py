@@ -574,12 +574,14 @@ class Participant():
 
             if (OCA.Talk.SimpleWebRTC) {
                 OCA.Talk.SimpleWebRTC.on('channelMessage', function(peer, label, data) {
-                    // Speaking state messages are sent through the "status"
-                    // data channel, so other channels (like "chat" or
-                    // "fileTransfer") are not relevant here.
-                    if (label !== 'status') {
-                        return;
-                    }
+                    // Note that the label is intentionally not checked: when
+                    // an MCU is used (required for recording) the messages
+                    // broadcast by the clients are relayed by it through its
+                    // own data channel, so the label on the receiver side is
+                    // not the "status" one used by the senders. This is the
+                    // same reason why Talk itself only matches on the type of
+                    // the messages.
+                    console.debug('channelMessage received', peer.id, label, data);
 
                     if (data.type === 'speaking') {
                         var key = peer.id;
