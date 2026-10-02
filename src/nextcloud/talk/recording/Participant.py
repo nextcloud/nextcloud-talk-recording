@@ -669,10 +669,18 @@ class Participant():
         """
         Retrieves and clears the accumulated speaker events from the browser.
 
+        Note that this is a destructive operation: besides removing the
+        events from the browser, the state of which participants are
+        currently speaking is also reset, so an interval left open (a
+        participant speaking when the events were retrieved) is closed and
+        would not be re-opened until that participant stops and starts
+        speaking again. Therefore this should be called only when the
+        recording is ending, never while recording.
+
         :return: a list of dicts with keys participantId, participantName,
                  startTimestamp, stopTimestamp, startType, stopType
-                 (stopTimestamp may be None if the participant was still
-                 speaking when the event was retrieved).
+                 (intervals still open are closed with the retrieval time
+                 and a "stillSpeaking" stop type).
         """
 
         result = self.seleniumHelper.execute('''
