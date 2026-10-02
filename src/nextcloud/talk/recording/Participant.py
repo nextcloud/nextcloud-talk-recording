@@ -702,6 +702,15 @@ class Participant():
             self.seleniumHelper._parentLogger.info("No speaker activity detected during recording")
             return
 
+        self._logSpeakerEvents(events)
+
+    def _logSpeakerEvents(self, events):
+        """
+        Logs the given speaker events.
+
+        :param events: the list of speaker events to log.
+        """
+
         self.seleniumHelper._parentLogger.info("Speaker activity during recording (%d intervals):", len(events))
 
         for event in events:
@@ -747,32 +756,11 @@ class Participant():
             self.seleniumHelper._parentLogger.info("No speaker activity detected during recording")
             return False
 
-        self.seleniumHelper._parentLogger.info("Speaker activity during recording (%d intervals):", len(events))
+        self._logSpeakerEvents(events)
 
         for event in events:
             startMs = event.get('startTimestamp', 0)
             stopMs = event.get('stopTimestamp') or startMs
-            startStr = datetime.fromtimestamp(startMs / 1000).strftime('%H:%M:%S.%f')[:-3]
-            stopStr = datetime.fromtimestamp(stopMs / 1000).strftime('%H:%M:%S.%f')[:-3]
-            durationSec = round((stopMs - startMs) / 1000, 1)
-
-            name = event.get('participantName', '')
-            participantId = event.get('participantId', '?')
-            displayName = name if name else participantId
-
-            startType = event.get('startType', '?')
-            stopType = event.get('stopType', '?')
-
-            self.seleniumHelper._parentLogger.info(
-                "  %s (%s): %s (%s) - %s (%s) (%.1fs)",
-                displayName,
-                participantId,
-                startStr,
-                startType,
-                stopStr,
-                stopType,
-                durationSec
-            )
 
             event['startTimestampRelative'] = max(startMs - recordingStartTimestamp, 0) if recordingStartTimestamp else 0
             event['stopTimestampRelative'] = max(stopMs - recordingStartTimestamp, 0) if recordingStartTimestamp else 0
