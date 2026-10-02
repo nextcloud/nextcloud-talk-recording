@@ -342,7 +342,12 @@ def uploadRecordingInChunks(backendUrl, uploadShare, fileName):
         # the local file name) in order to match what the backend expects.
         intervalsUploadName = os.path.basename(Participant.getIntervalsFileName(uploadShare['fileName']))
 
-        _uploadSmallFileViaWebDAV(backendUrl, shareToken, sharePassword, intervalsFileName, intervalsUploadName)
+        # The intervals are optional, so a failure uploading them must not
+        # prevent the recording (already assembled) from being stored.
+        try:
+            _uploadSmallFileViaWebDAV(backendUrl, shareToken, sharePassword, intervalsFileName, intervalsUploadName)
+        except Exception:
+            logger.exception("Failed to upload the speaker intervals file, storing the recording without it")
 
 def _uploadSmallFileViaWebDAV(backendUrl, shareToken, sharePassword, fileName, uploadName=None):
     """
@@ -447,8 +452,13 @@ def uploadRecordingDirectly(backendUrl, token, fileName, owner):
     }
 
     if intervalsFileName:
-        # pylint: disable=consider-using-with
-        data['intervalsFile'] = (os.path.basename(intervalsFileName), open(intervalsFileName, 'rb'))
+        # The intervals are optional, so a failure reading them must not
+        # prevent the recording from being uploaded.
+        try:
+            # pylint: disable=consider-using-with
+            data['intervalsFile'] = (os.path.basename(intervalsFileName), open(intervalsFileName, 'rb'))
+        except OSError:
+            logger.warning("Failed to open the speaker intervals file %s, uploading the recording without it", intervalsFileName)
 
     multipartEncoder = MultipartEncoder(data)
 
