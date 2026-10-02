@@ -552,7 +552,7 @@ class Participant():
         Injects JavaScript to track when participants start and stop speaking.
         """
 
-        self.seleniumHelper.executeAsync('''
+        trackingResult = self.seleniumHelper.executeAsync('''
             window.speakerEvents = [];
             window._speakingParticipants = {};
 
@@ -569,6 +569,8 @@ class Participant():
                 }
                 return { participantName: '', participantUserId: '' };
             };
+
+            var trackingResult = 'ok';
 
             if (OCA.Talk.SimpleWebRTC) {
                 OCA.Talk.SimpleWebRTC.on('channelMessage', function(peer, label, data) {
@@ -637,7 +639,11 @@ class Participant():
                             delete window._speakingParticipants[key];
                         }
                     });
-
+                } else {
+                    // Without the signaling connection the flags updates of
+                    // SIP participants can not be listened to, so their
+                    // speaking intervals would not be tracked.
+                    trackingResult = 'noSignalingConnection';
                 }
 
                 OCA.Talk.SimpleWebRTC.on('peerEnded', function(peer) {
@@ -662,8 +668,18 @@ class Participant():
                         delete window._speakingParticipants[key];
                     }
                 });
+            } else {
+                trackingResult = 'noSimpleWebRTC';
             }
+
+            returnResolve(trackingResult);
         ''')
+
+        if trackingResult == 'noSimpleWebRTC':
+            self.seleniumHelper._parentLogger.warning("SimpleWebRTC is not available, speaking intervals will not be tracked")
+
+        elif trackingResult == 'noSignalingConnection':
+            self.seleniumHelper._parentLogger.warning("Signaling connection is not available, speaking intervals of SIP participants will not be tracked")
 
     def getSpeakerEvents(self):
         """
