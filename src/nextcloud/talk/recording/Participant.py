@@ -547,7 +547,10 @@ class Participant():
             )
         ''')
 
-        self._setupSpeakerTracking()
+        try:
+            self._setupSpeakerTracking()
+        except Exception:
+            self._parentLogger.exception("Error when setting up the speaking intervals tracking, intervals will not be recorded")
 
     def _setupSpeakerTracking(self):
         """
@@ -574,7 +577,7 @@ class Participant():
 
             var trackingResult = 'ok';
 
-            if (OCA.Talk.SimpleWebRTC) {
+            if (window.OCA && OCA.Talk && OCA.Talk.SimpleWebRTC) {
                 OCA.Talk.SimpleWebRTC.on('channelMessage', function(peer, label, data) {
                     // Note that the label is intentionally not checked: when
                     // an MCU is used (required for recording) the messages
