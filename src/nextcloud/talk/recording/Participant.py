@@ -634,6 +634,15 @@ class Participant():
                 }
 
                 OCA.Talk.SimpleWebRTC.on('peerEnded', function(peer) {
+                    // Screen sharing peers have the same ID as the video peer
+                    // of the same participant, but ending a screen sharing
+                    // (which fires "peerEnded" for its peer) does not mean
+                    // that the participant stopped speaking, as the audio is
+                    // not related to the screen sharing peer.
+                    if (peer.type !== 'video') {
+                        return;
+                    }
+
                     var key = peer.id;
                     if (window._speakingParticipants[key]) {
                         for (var i = window.speakerEvents.length - 1; i >= 0; i--) {
@@ -648,6 +657,15 @@ class Participant():
                 });
 
                 OCA.Talk.SimpleWebRTC.on('peerStreamRemoved', function(peer) {
+                    // Screen sharing peers have the same ID as the video peer
+                    // of the same participant, but removing a screen sharing
+                    // stream does not mean that the participant stopped
+                    // speaking, as the audio is not related to the screen
+                    // sharing peer.
+                    if (peer.type !== 'video') {
+                        return;
+                    }
+
                     var key = peer.id;
                     if (window._speakingParticipants[key]) {
                         for (var i = window.speakerEvents.length - 1; i >= 0; i--) {
