@@ -17,9 +17,10 @@ gets the sidecar
 
     .Recording 2026-10-02 17-37-20 speaking times.json
 
-Note that storing it next to the recording requires the corresponding support
-in the Talk backend; otherwise the file is uploaded but not moved to its final
-location (it stays in the temporary upload share until it expires).
+Note that uploading it requires the corresponding support in the Talk backend.
+The sidecar is stored directly in the recording folder (it is not part of the
+chunked upload), so on a backend that does not handle it the file is simply
+left there as an unused hidden file next to the recording.
 
 ## File format
 
