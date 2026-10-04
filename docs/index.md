@@ -20,3 +20,4 @@
 ## Other
 
 * [Prometheus metrics](prometheus-metrics.md)
+* [Speaker intervals](speaker-intervals.md)
