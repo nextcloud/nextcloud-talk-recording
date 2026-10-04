@@ -21,6 +21,7 @@ from requests_toolbelt import MultipartEncoder
 
 from nextcloud.talk import recording
 from .Config import config
+from .Participant import Participant
 
 logger = logging.getLogger(__name__)
 
@@ -193,7 +194,13 @@ def uploadRecording(backendUrl, token, fileName, owner):
     :param owner: the owner of the uploaded file.
     """
 
+    intervalsFileName = Participant.getIntervalsFileName(fileName)
+    intervalsFileName = intervalsFileName if os.path.exists(intervalsFileName) else None
+
     logger.info("Upload recording %s to %s in %s as %s", fileName, backendUrl, token, owner)
+
+    if intervalsFileName:
+        logger.info("Also uploading speaker intervals from %s", intervalsFileName)
 
     uploadShare = requestUpload(backendUrl, token, fileName, owner)
 
@@ -205,12 +212,12 @@ def uploadRecording(backendUrl, token, fileName, owner):
 
         return
 
-    uploadRecordingInChunks(backendUrl, uploadShare, fileName)
+    intervalsUploaded = uploadRecordingInChunks(backendUrl, uploadShare, fileName)
 
     # Once the recording was uploaded and assembled the store endpoint is called
     # with its file name to trigger the post-processing and the notification for
     # the moderators.
-    store(backendUrl, token, uploadShare['fileName'], owner)
+    store(backendUrl, token, uploadShare['fileName'], owner, intervalsUploaded)
 
 def requestUpload(backendUrl, token, fileName, owner):
     """
@@ -279,6 +286,8 @@ def uploadRecordingInChunks(backendUrl, uploadShare, fileName):
     :param uploadShare: the data of the upload share ("token", "password" and
            "fileName") as returned by requestUpload().
     :param fileName: the recording file name.
+    :returns: whether the speaker intervals sidecar was uploaded alongside the
+              recording.
     """
 
     backendUrl = backendUrl.rstrip('/')
@@ -286,6 +295,9 @@ def uploadRecordingInChunks(backendUrl, uploadShare, fileName):
     shareToken = uploadShare['token']
     sharePassword = uploadShare['password']
     auth = (shareToken, sharePassword)
+
+    intervalsFileName = Participant.getIntervalsFileName(fileName)
+    intervalsFileName = intervalsFileName if os.path.exists(intervalsFileName) else None
 
     # A unique upload directory is used for each upload to prevent conflicts
     # with leftover chunks from a previous failed upload.
@@ -325,7 +337,57 @@ def uploadRecordingInChunks(backendUrl, uploadShare, fileName):
     # Assemble the uploaded chunks into the final file at the destination.
     doRequest(backendUrl, Request('MOVE', uploadUrl + '/.file', headers, auth=auth))
 
-def store(backendUrl, token, fileName, owner):
+    if intervalsFileName:
+        # The recording is assembled with the file name chosen by the backend,
+        # which is also the one reported when storing the recording, so the
+        # intervals file needs to be uploaded with a name based on it (not on
+        # the local file name) in order to match what the backend expects.
+        intervalsUploadName = os.path.basename(Participant.getIntervalsFileName(uploadShare['fileName']))
+
+        # The intervals are optional, so a failure uploading them must not
+        # prevent the recording (already assembled) from being stored.
+        try:
+            _uploadSmallFileViaWebDAV(backendUrl, shareToken, sharePassword, intervalsFileName, intervalsUploadName)
+            return True
+        except Exception:
+            logger.exception("Failed to upload the speaker intervals file, storing the recording without it")
+
+    return False
+
+def _uploadSmallFileViaWebDAV(backendUrl, shareToken, sharePassword, fileName, uploadName=None):
+    """
+    Uploads a small file via a single WebDAV PUT request to the public
+    WebDAV endpoint.
+
+    :param backendUrl: the base URL of the backend.
+    :param shareToken: the token of the upload share.
+    :param sharePassword: the password of the upload share.
+    :param fileName: the file to upload.
+    :param uploadName: if given, the name to use for the file in the upload
+        share instead of the base name of the file to upload.
+    """
+
+    backendUrl = backendUrl.rstrip('/')
+    auth = (shareToken, sharePassword)
+
+    if uploadName is None:
+        uploadName = os.path.basename(fileName)
+
+    destinationUrl = backendUrl + '/public.php/dav/files/' + shareToken + '/' + quote(uploadName)
+
+    headers = {
+        'Destination': destinationUrl,
+        'User-Agent': recording.USER_AGENT,
+    }
+
+    # pylint: disable=consider-using-with
+    doRequest(
+        backendUrl,
+        Request('PUT', destinationUrl, headers, data=open(fileName, 'rb'), auth=auth)
+    )
+
+
+def store(backendUrl, token, fileName, owner, intervalsUploaded=False):
     """
     Triggers the post-processing of a recording previously uploaded in chunks.
 
@@ -334,14 +396,22 @@ def store(backendUrl, token, fileName, owner):
     :param fileName: the name of the file uploaded through the upload share, as
            returned by requestUpload().
     :param owner: the owner of the uploaded file.
+    :param intervalsUploaded: whether the speaker intervals sidecar was also
+           uploaded through the same share (with a name derived from
+           "fileName"), in which case that name is reported.
     """
 
     url = backendUrl.rstrip('/') + '/ocs/v2.php/apps/spreed/api/v1/recording/' + token + '/store'
 
-    data = json.dumps({
+    storeData = {
         'owner': owner,
         'fileName': fileName,
-    }).encode()
+    }
+
+    if intervalsUploaded:
+        storeData['intervalsFileName'] = os.path.basename(Participant.getIntervalsFileName(fileName))
+
+    data = json.dumps(storeData).encode()
 
     # The checksum is calculated from the conversation token, like in the other
     # recording endpoints.
@@ -378,6 +448,9 @@ def uploadRecordingDirectly(backendUrl, token, fileName, owner):
 
     url = backendUrl.rstrip('/') + '/ocs/v2.php/apps/spreed/api/v1/recording/' + token + '/store'
 
+    intervalsFileName = Participant.getIntervalsFileName(fileName)
+    intervalsFileName = intervalsFileName if os.path.exists(intervalsFileName) else None
+
     # Plain values become arguments, while tuples become files; the body used to
     # calculate the checksum is empty.
     data = {
@@ -385,6 +458,15 @@ def uploadRecordingDirectly(backendUrl, token, fileName, owner):
         # pylint: disable=consider-using-with
         'file': (os.path.basename(fileName), open(fileName, 'rb')),
     }
+
+    if intervalsFileName:
+        # The intervals are optional, so a failure reading them must not
+        # prevent the recording from being uploaded.
+        try:
+            # pylint: disable=consider-using-with
+            data['intervalsFile'] = (os.path.basename(intervalsFileName), open(intervalsFileName, 'rb'))
+        except OSError:
+            logger.warning("Failed to open the speaker intervals file %s, uploading the recording without it", intervalsFileName)
 
     multipartEncoder = MultipartEncoder(data)
 
