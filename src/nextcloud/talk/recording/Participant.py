@@ -10,6 +10,7 @@ Module to join a call with a browser.
 import hashlib
 import hmac
 import json
+import os
 import re
 import threading
 from datetime import datetime
@@ -474,6 +475,8 @@ class Participant():
 
         acceptInsecureCerts = config.getBackendSkipVerify(self.nextcloudUrl)
 
+        self._parentLogger = parentLogger
+
         self.seleniumHelper = SeleniumHelper(parentLogger, acceptInsecureCerts)
 
         if browser == 'chrome':
@@ -482,6 +485,20 @@ class Participant():
             self.seleniumHelper.startFirefox(width, height, env, driverPath, browserPath)
         else:
             raise Exception('Invalid browser: ' + browser)
+
+    @staticmethod
+    def getIntervalsFileName(recordingFileName):
+        """
+        Returns the sidecar JSON filename matching the given recording file.
+
+        :param recordingFileName: the recording file name.
+        :return: the intervals JSON file name.
+        """
+
+        extensionlessFileName, _ = os.path.splitext(recordingFileName)
+        directory = os.path.dirname(extensionlessFileName)
+        baseName = os.path.basename(extensionlessFileName)
+        return os.path.join(directory, '.' + baseName + ' speaking times.json')
 
     def joinCall(self, token):
         """
@@ -530,10 +547,283 @@ class Participant():
             )
         ''')
 
-    def disconnect(self):
+        try:
+            self._setupSpeakerTracking()
+        except Exception:
+            self._parentLogger.exception("Error when setting up the speaking intervals tracking, intervals will not be recorded")
+
+    def _setupSpeakerTracking(self):
+        """
+        Injects JavaScript to track when participants start and stop speaking.
+        """
+
+        trackingResult = self.seleniumHelper.executeAsync('''
+            window.speakerEvents = [];
+            window._speakingParticipants = {};
+
+            window._getParticipantInfo = function(sessionId) {
+                var joinedUsers = (OCA.Talk.SimpleWebRTC.connection && OCA.Talk.SimpleWebRTC.connection.joinedUsers) || {};
+                for (var participantId in joinedUsers) {
+                    var joinedUser = joinedUsers[participantId];
+                    if (joinedUser && joinedUser.sessionid === sessionId) {
+                        return {
+                            participantName: '' + (((joinedUser.user || {}).displayname) || ''),
+                            participantUserId: '' + (joinedUser.userid || '')
+                        };
+                    }
+                }
+                return { participantName: '', participantUserId: '' };
+            };
+
+            var trackingResult = 'ok';
+
+            if (window.OCA && OCA.Talk && OCA.Talk.SimpleWebRTC) {
+                OCA.Talk.SimpleWebRTC.on('channelMessage', function(peer, label, data) {
+                    // Note that the label is intentionally not checked: when
+                    // an MCU is used (required for recording) the messages
+                    // broadcast by the clients are relayed by it through its
+                    // own data channel, so the label on the receiver side is
+                    // not the "status" one used by the senders. This is the
+                    // same reason why Talk itself only matches on the type of
+                    // the messages.
+                    console.debug('channelMessage received', peer.id, label, data);
+
+                    if (data.type === 'speaking') {
+                        var key = peer.id;
+                        if (!window._speakingParticipants[key]) {
+                            window._speakingParticipants[key] = Date.now();
+                            var info = window._getParticipantInfo(peer.id);
+                            window.speakerEvents.push({
+                                participantId: peer.id,
+                                participantName: info.participantName,
+                                participantUserId: info.participantUserId,
+                                startTimestamp: Date.now(),
+                                stopTimestamp: null,
+                                startType: 'speaking',
+                                stopType: null
+                            });
+                        }
+                    } else if (data.type === 'stoppedSpeaking') {
+                        var key = peer.id;
+                        if (window._speakingParticipants[key]) {
+                            for (var i = window.speakerEvents.length - 1; i >= 0; i--) {
+                                if (window.speakerEvents[i].participantId === key && window.speakerEvents[i].stopTimestamp === null) {
+                                    window.speakerEvents[i].stopTimestamp = Date.now();
+                                    window.speakerEvents[i].stopType = 'stoppedSpeaking';
+                                    break;
+                                }
+                            }
+                            delete window._speakingParticipants[key];
+                        }
+                    }
+                });
+
+                if (OCA.Talk.SimpleWebRTC.connection) {
+                    OCA.Talk.SimpleWebRTC.connection.on('participantFlagsChanged', function(event) {
+                        var SIP_FLAG_SPEAKING = 4;
+                        var isSpeaking = (event.flags & SIP_FLAG_SPEAKING) > 0;
+                        var key = event.sessionid;
+                        if (isSpeaking && !window._speakingParticipants[key]) {
+                            window._speakingParticipants[key] = Date.now();
+                            var info = window._getParticipantInfo(event.sessionid);
+                            window.speakerEvents.push({
+                                participantId: event.sessionid,
+                                participantName: info.participantName,
+                                participantUserId: info.participantUserId,
+                                startTimestamp: Date.now(),
+                                stopTimestamp: null,
+                                startType: 'participantFlagsChanged',
+                                stopType: null
+                            });
+                        } else if (!isSpeaking && window._speakingParticipants[key]) {
+                            for (var i = window.speakerEvents.length - 1; i >= 0; i--) {
+                                if (window.speakerEvents[i].participantId === key && window.speakerEvents[i].stopTimestamp === null) {
+                                    window.speakerEvents[i].stopTimestamp = Date.now();
+                                    window.speakerEvents[i].stopType = 'participantFlagsChanged';
+                                    break;
+                                }
+                            }
+                            delete window._speakingParticipants[key];
+                        }
+                    });
+                } else {
+                    // Without the signaling connection the flags updates of
+                    // SIP participants can not be listened to, so their
+                    // speaking intervals would not be tracked.
+                    trackingResult = 'noSignalingConnection';
+                }
+
+                OCA.Talk.SimpleWebRTC.on('peerEnded', function(peer) {
+                    // Screen sharing peers have the same ID as the video peer
+                    // of the same participant, but ending a screen sharing
+                    // (which fires "peerEnded" for its peer) does not mean
+                    // that the participant stopped speaking, as the audio is
+                    // not related to the screen sharing peer.
+                    if (peer.type !== 'video') {
+                        console.debug('Ignoring peerEnded of', peer.type, 'peer', peer.id);
+                        return;
+                    }
+
+                    var key = peer.id;
+                    if (window._speakingParticipants[key]) {
+                        for (var i = window.speakerEvents.length - 1; i >= 0; i--) {
+                            if (window.speakerEvents[i].participantId === key && window.speakerEvents[i].stopTimestamp === null) {
+                                window.speakerEvents[i].stopTimestamp = Date.now();
+                                window.speakerEvents[i].stopType = 'peerEnded';
+                                break;
+                            }
+                        }
+                        delete window._speakingParticipants[key];
+                    }
+                });
+            } else {
+                trackingResult = 'noSimpleWebRTC';
+            }
+
+            returnResolve(trackingResult);
+        ''')
+
+        if trackingResult == 'noSimpleWebRTC':
+            self._parentLogger.warning("SimpleWebRTC is not available, speaking intervals will not be tracked")
+
+        elif trackingResult == 'noSignalingConnection':
+            self._parentLogger.warning("Signaling connection is not available, speaking intervals of SIP participants will not be tracked")
+
+    def getSpeakerEvents(self):
+        """
+        Retrieves and clears the accumulated speaker events from the browser.
+
+        Note that this is a destructive operation: besides removing the
+        events from the browser, the state of which participants are
+        currently speaking is also reset, so an interval left open (a
+        participant speaking when the events were retrieved) is closed and
+        would not be re-opened until that participant stops and starts
+        speaking again. Therefore this should be called only when the
+        recording is ending, never while recording.
+
+        :return: a list of dicts with keys participantId, participantName,
+                 startTimestamp, stopTimestamp, startType, stopType
+                 (intervals still open are closed with the retrieval time
+                 and a "stillSpeaking" stop type).
+        """
+
+        result = self.seleniumHelper.execute('''
+            var events = window.speakerEvents || [];
+            var now = Date.now();
+            for (var i = 0; i < events.length; i++) {
+                if (events[i].stopTimestamp === null) {
+                    events[i].stopTimestamp = now;
+                    events[i].stopType = 'stillSpeaking';
+                }
+            }
+            window.speakerEvents = [];
+            window._speakingParticipants = {};
+            return events;
+        ''')
+
+        return result or []
+
+    def logSpeakerEvents(self):
+        """
+        Retrieves speaker events from the browser and logs them.
+        """
+
+        events = self.getSpeakerEvents()
+
+        if not events:
+            self._parentLogger.info("No speaker activity detected during recording")
+            return
+
+        self._logSpeakerEvents(events)
+
+    def _logSpeakerEvents(self, events):
+        """
+        Logs the given speaker events.
+
+        :param events: the list of speaker events to log.
+        """
+
+        self._parentLogger.info("Speaker activity during recording (%d intervals):", len(events))
+
+        for event in events:
+            startMs = event.get('startTimestamp', 0)
+            stopMs = event.get('stopTimestamp') or startMs
+            startStr = datetime.fromtimestamp(startMs / 1000).strftime('%H:%M:%S.%f')[:-3]
+            stopStr = datetime.fromtimestamp(stopMs / 1000).strftime('%H:%M:%S.%f')[:-3]
+            durationSec = round((stopMs - startMs) / 1000, 1)
+
+            name = event.get('participantName', '')
+            participantId = event.get('participantId', '?')
+            displayName = name if name else participantId
+
+            startType = event.get('startType', '?')
+            stopType = event.get('stopType', '?')
+
+            self._parentLogger.info(
+                "  %s (%s): %s (%s) - %s (%s) (%.1fs)",
+                displayName,
+                participantId,
+                startStr,
+                startType,
+                stopStr,
+                stopType,
+                durationSec
+            )
+
+    def saveSpeakerEventsToFile(self, fileName, recordingStartTimestamp=0):
+        """
+        Retrieves speaker events from the browser and saves them to a JSON file.
+
+        Also logs the events to the parent logger.
+
+        :param fileName: the path to save the JSON file to.
+        :param recordingStartTimestamp: unix timestamp in milliseconds marking
+            the recording start.
+        :return: True if events were saved, False if no events were found.
+        """
+
+        events = self.getSpeakerEvents()
+
+        if not events:
+            self._parentLogger.info("No speaker activity detected during recording")
+            return False
+
+        self._logSpeakerEvents(events)
+
+        for event in events:
+            startMs = event.get('startTimestamp', 0)
+            stopMs = event.get('stopTimestamp') or startMs
+
+            event['startTimestampRelative'] = max(startMs - recordingStartTimestamp, 0) if recordingStartTimestamp else 0
+            event['stopTimestampRelative'] = max(stopMs - recordingStartTimestamp, 0) if recordingStartTimestamp else 0
+
+        document = {
+            'recordingStartTimestamp': recordingStartTimestamp,
+            'intervals': events,
+        }
+
+        with open(fileName, 'w', encoding='utf-8') as f:
+            json.dump(document, f, indent=2)
+
+        self._parentLogger.info("Speaker intervals saved to %s", fileName)
+
+        return True
+
+    def disconnect(self, recordingFileName=None, recordingStartTimestamp=0):
         """
         Disconnects from the signaling server.
+
+        :param recordingFileName: if provided, speaker intervals will be saved
+            next to this recording using the same basename and the ".json"
+            extension.
+        :param recordingStartTimestamp: unix timestamp in milliseconds marking
+            the recording start.
         """
+
+        if recordingFileName:
+            self.saveSpeakerEventsToFile(self.getIntervalsFileName(recordingFileName), recordingStartTimestamp)
+        else:
+            self.logSpeakerEvents()
 
         self.seleniumHelper.execute('''
             OCA.Talk.signalingKill()
