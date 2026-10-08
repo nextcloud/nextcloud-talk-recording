@@ -297,10 +297,14 @@ def uploadRecordingInChunks(backendUrl, uploadShare, fileName):
 
     # The destination of the assembled file and the final file size need to be
     # provided in every request of the chunked upload.
+    # "X-Requested-With: XMLHttpRequest" also needs to be provided, as otherwise
+    # the public WebDAV API rejects non-GET requests if Server2Server sharing is
+    # disabled.
     headers = {
         'Destination': destinationUrl,
         'OC-Total-Length': str(fileSize),
         'User-Agent': recording.USER_AGENT,
+        'X-Requested-With': 'XMLHttpRequest',
     }
 
     # Initialize the chunked upload.
