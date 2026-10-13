@@ -16,6 +16,7 @@ from datetime import datetime
 from secrets import token_urlsafe
 from shutil import disk_usage
 from time import sleep
+from urllib.parse import urlparse
 
 import websocket
 from selenium.webdriver.chrome.options import Options as ChromeOptions
@@ -248,7 +249,7 @@ class SeleniumHelper:
 
         self.bidiLogsHelper = BiDiLogsHelper(self.driver, self._parentLogger)
 
-    def startFirefox(self, width, height, env, driverPath, browserPath):
+    def startFirefox(self, width, height, env, driverPath, browserPath, localNetworkAccessSkipDomains):
         """
         Starts a Firefox instance.
 
@@ -258,6 +259,9 @@ class SeleniumHelper:
                     the browser in.
         :param driverPath: the path to override the default geckodriver.
         :param browserPath: the path to override the default Firefox executable.
+        :param localNetworkAccessSkipDomains: comma-separated list of domains
+                                              that should skip local network
+                                              access checks.
         """
 
         options = FirefoxOptions()
@@ -277,6 +281,10 @@ class SeleniumHelper:
 
         # Allow to play media without user interaction.
         options.set_preference('media.autoplay.default', 0)
+
+        # In Firefox >= 153, skip requesting permissions to access the local
+        # network for the given source and target domains.
+        options.set_preference('network.lna.skip-domains', localNetworkAccessSkipDomains)
 
         options.add_argument('--kiosk')
         options.add_argument(f'--width={width}')
@@ -479,7 +487,12 @@ class Participant():
         if browser == 'chrome':
             self.seleniumHelper.startChrome(width, height, env, driverPath, browserPath)
         elif browser == 'firefox':
-            self.seleniumHelper.startFirefox(width, height, env, driverPath, browserPath)
+            # Allow the Nextcloud server to access any local device (for
+            # example, the signaling server).
+            nextcloudDomain = urlparse(nextcloudUrl).hostname
+            localNetworkAccessSkipDomains = nextcloudDomain
+
+            self.seleniumHelper.startFirefox(width, height, env, driverPath, browserPath, localNetworkAccessSkipDomains)
         else:
             raise Exception('Invalid browser: ' + browser)
 
