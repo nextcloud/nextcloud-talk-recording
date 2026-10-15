@@ -5,6 +5,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.3.1] - 2026-10-16
+### Fixed
+
+- Send Ajax header to upload request [#117](https://github.com/nextcloud/nextcloud-talk-recording/pull/117)
+- Allow backend pages to access local network devices in Firefox [#120](https://github.com/nextcloud/nextcloud-talk-recording/pull/120)
+
 ## [0.3.0] - 2026-09-02
 ### Added
 
