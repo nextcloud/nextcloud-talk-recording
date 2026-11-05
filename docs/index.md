@@ -8,6 +8,7 @@
 
 * [Building](building.md)
 * [Installation](installation.md)
+* [Logging](logging.md)
 
 ### Configuration
 
