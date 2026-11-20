@@ -70,6 +70,10 @@ def doRequest(backendUrl, request, retries=3):
 
         return response
     except Exception as exception:
+        if isinstance(exception, HTTPError):
+            if exception.response is not None and exception.response.text:
+                logger.error("Error response: %s", exception.response.text)
+
         # Client errors (4xx) are deterministic, so retrying them would just
         # fail again and is therefore pointless.
         if retries > 1 and not _isClientError(exception):
